@@ -43,6 +43,9 @@ find_package(Crow REQUIRED)
 # 链接 Crow 库和其他依赖
 target_link_libraries(galaxy PUBLIC Crow::Crow)
 
+find_package(OpenSSL REQUIRED)
+target_link_libraries(galaxy PUBLIC openssl::openssl)
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 14) # 交叉编译的gcc是6.4版本 所以采用14
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
