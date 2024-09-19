@@ -42,8 +42,8 @@ void UpgradeController::InitRoutes(crow::SimpleApp& app) {
             // 获取md5
             auto md5 = form_data.get_part_by_name("md5");
             auto shead = file.get_header_object("content-disposition");
-            bool isSame = FileUtils::CompareMD5(file.body, md5.body);
-            if (isSame) {
+            bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
+            if (isMD5Match) {
                 file_name = FileUtils::GetPairFileNameFull(shead.params);
                 std::string saveFilePath = "./upgrade/" + type.body + '/' + file_name;
                 FileUtils::Save(file.body, saveFilePath);
