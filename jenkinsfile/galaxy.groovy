@@ -61,11 +61,15 @@ pipeline {
                         error "构建产物 'galaxy' 不存在，构建可能失败"
                     }
 
-                    def timestamp = new Date().format('yyyyMMdd_HHmmss')
-                    def tar_name = "galaxy_${branch}_${timestamp}.tar.gz"
-
+                    // def timestamp = new Date().format('yyyyMMdd_HHmmss')
+                    // 获取当前分支的hash 和 count
+                    def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
+                    def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def tar_name = "galaxy_${branch}_${hash}_${count}.tar.gz"
+                    // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
+                    sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
                     // 打包 Release 目录
-                    sh "tar -czf ${tar_name} -C ${buildDir} ."
+                    sh "tar -czvf ${tar_name} -C ${buildDir} ."
 
                     sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
                     
