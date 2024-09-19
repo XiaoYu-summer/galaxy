@@ -1,4 +1,12 @@
 {
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.defaultFormatter": "xaver.clang-format",
+  "clang-format.executable": "clang-format",
+  "C_Cpp.clang_format_style": "file:${workspaceFolder}/.clang-format",
+  "clang-format.fallbackStyle": "Google",
+  "clang-format.style": "file",
+  "clang-format.assumeFilename": "file:${workspaceFolder}/.clang-format",
   "files.associations": {
     "*.cjson": "jsonc",
     "*.wxss": "css",
@@ -69,7 +77,10 @@
     "unordered_map": "cpp",
     "variant": "cpp",
     "vector": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "span": "cpp",
+    "valarray": "cpp",
+    "unordered_set": "cpp"
   },
   "cmake.configureOnOpen": true,
   "cmake.sourceDirectory": "${workspaceFolder}",
@@ -80,5 +91,8 @@
   ],
   "C_Cpp.intelliSenseEngine": "default",
   "C_Cpp.default.cppStandard": "gnu++14",
-  "C_Cpp.default.cStandard": "gnu11"
+  "C_Cpp.default.cStandard": "gnu11",
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  }
 }

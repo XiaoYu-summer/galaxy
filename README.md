@@ -77,3 +77,9 @@ make
 ## 代码规范
 
 https://cvte.kdocs.cn/l/cjSxTVp1QeLl
+
+### 工具
+
+Clang-format
+https://www.cnblogs.com/simpleGao/p/17022517.html
+https://juejin.cn/post/7071871587674243102

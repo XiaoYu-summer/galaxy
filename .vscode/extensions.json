@@ -4,6 +4,7 @@
     "ms-vscode.cmake-tools",
     "josetr.cmake-language-support-vscode",
     "ms-vscode.cpptools",
-    "mads-hartmann.bash-ide-vscode"
+    "mads-hartmann.bash-ide-vscode",
+    "xaver.clang-format"
   ]
 }
