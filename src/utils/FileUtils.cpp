@@ -45,10 +45,7 @@ std::string GetPairFileNameFull(const std::unordered_map<std::string, std::strin
 }
 
 std::string Save(const std::string &file, const std::string &path) {
-    // 判断 path 路径所在的文件夹是否存在，不存在则创建
-    std::string folder = path.substr(0, path.find_last_of("/"));
-    std::string command = "mkdir -p " + folder;
-    system(command.c_str());
+    createDirectory(path);
     std::ofstream saveFile;
     saveFile.open(path, std::ofstream::binary);
     saveFile << file;

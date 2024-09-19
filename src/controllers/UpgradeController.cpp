@@ -45,7 +45,7 @@ void UpgradeController::InitRoutes(crow::SimpleApp& app) {
             bool isSame = FileUtils::CompareMD5(file.body, md5.body);
             if (isSame) {
                 file_name = FileUtils::GetPairFileNameFull(shead.params);
-                std::string saveFilePath = "./tests/" + file_name;
+                std::string saveFilePath = "./upgrade/" + type.body + '/' + file_name;
                 FileUtils::Save(file.body, saveFilePath);
                 return SuccessResponse(res);
             } else {
