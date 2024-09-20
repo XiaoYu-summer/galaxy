@@ -75,6 +75,8 @@ pipeline {
                     
                     // 清理临时文件
                     sh "rm ${tar_name}"
+
+                    env.Gaxaly_URL = "https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
                 }
             }
         }
