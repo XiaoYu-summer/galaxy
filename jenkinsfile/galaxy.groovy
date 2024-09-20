@@ -65,6 +65,10 @@ pipeline {
                     // 获取当前分支的hash 和 count
                     def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
                     def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    // 获取当前分支
+                    def branch = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    // 将branch中的 / 替换为 _
+                    branch = branch.replaceAll("/", "_")
                     def tar_name = "galaxy_${branch}_${hash}_${count}.tar.gz"
                     // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
@@ -84,7 +88,7 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            // cleanWs()
         }
     }
 }
