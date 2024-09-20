@@ -1,7 +1,7 @@
 def url = 'git@gitlab.gz.cvte.cn:1602/client/aoip/galaxy.git'
 def branch = "${BRANCH}"
 def tag = ""
-def build_image = 'registry.gz.cvte.cn/1602/aoip-ubuntu:1.1.0'
+def build_image = 'registry.gz.cvte.cn/1602/aoip-ubuntu:1.1.1'
 def docker_registry = 'https://registry.gz.cvte.cn'
 
 pipeline {
