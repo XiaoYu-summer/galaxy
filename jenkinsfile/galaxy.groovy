@@ -66,6 +66,7 @@ pipeline {
                     def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
                     def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     branch = branch.replaceAll("/", "_")
+                    branch = branch.replaceAll("refs_heads_", "")
                     def tar_name = "galaxy_${branch}_${hash}_${count}.tar.gz"
                     // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
