@@ -1,5 +1,6 @@
 #include <openssl/evp.h>
 
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -9,11 +10,11 @@
 namespace FileUtils {
 void createDirectory(const std::string &path) {
     try {
-        std::filesystem::path folder = std::filesystem::path(path).parent_path();
-        if (!folder.empty() && !std::filesystem::exists(folder)) {
-            std::filesystem::create_directories(folder);
+        boost::filesystem::path folder = boost::filesystem::path(path).parent_path();
+        if (!folder.empty() && !boost::filesystem::exists(folder)) {
+            boost::filesystem::create_directories(folder);
         }
-    } catch (const std::filesystem::filesystem_error &e) {
+    } catch (const boost::filesystem::filesystem_error &e) {
         std::cerr << "Error creating directory: " << e.what() << std::endl;
     }
 }

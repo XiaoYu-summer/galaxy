@@ -52,6 +52,9 @@ target_link_libraries(galaxy PUBLIC nlohmann_json::nlohmann_json)
 find_package(spdlog REQUIRED)
 target_link_libraries(galaxy PUBLIC spdlog::spdlog)
 
+find_package(Boost REQUIRED)
+target_link_libraries(galaxy PUBLIC boost::boost)
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 14) # 交叉编译的gcc是6.4版本 所以采用14
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
