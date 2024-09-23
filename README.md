@@ -1,4 +1,5 @@
 # Galaxy
+jenkins job: http://mlci.gz.cvte.cn/job/1602/job/sfu_build/job/AoIP/job/aoip_build/
 ## 快速开始
 ```
 mkdir build
