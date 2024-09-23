@@ -1,3 +1,4 @@
+#include <initializer_list>
 #include <unordered_set>
 
 #include "code/ErrorCode.h"
@@ -29,28 +30,29 @@ void UpgradeController::InitRoutes(crow::SimpleApp& app) {
      *  - md5 文件md5 string
      * 返回值 void
      */
-    CROW_ROUTE(app, "/resource/v1/update").methods("POST"_method)([](const crow::request& req, crow::response& res) {
-        std::string file_name;
-        crow::multipart::message form_data(req);
-        if (ValidateUpgradeParams(form_data)) {
-            return FailResponse(res, ErrorCode::PARAMS_ERROR, "params error");
-        } else {
-            // 获取文件
-            auto file = form_data.get_part_by_name("file");
-            // 获取类型
-            auto type = form_data.get_part_by_name("type");
-            // 获取md5
-            auto md5 = form_data.get_part_by_name("md5");
-            auto shead = file.get_header_object("content-disposition");
-            bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
-            if (isMD5Match) {
-                file_name = FileUtils::GetPairFileNameFull(shead.params);
-                std::string saveFilePath = "./upgrade/" + type.body + '/' + file_name;
-                FileUtils::Save(file.body, saveFilePath);
-                return SuccessResponse(res);
+    CROW_ROUTE(app, "/resource/v1/update")
+        .methods("POST"_method)([&app](const crow::request& req, crow::response& res) {
+            std::string file_name;
+            crow::multipart::message form_data(req);
+            if (ValidateUpgradeParams(form_data)) {
+                return FailResponse(res, ErrorCode::PARAMS_ERROR, "params error");
             } else {
-                return FailResponse(res, ErrorCode::MD5_MISMATCH, "md5 mismatch");
+                // 获取文件
+                auto file = form_data.get_part_by_name("file");
+                // 获取类型
+                auto type = form_data.get_part_by_name("type");
+                // 获取md5
+                auto md5 = form_data.get_part_by_name("md5");
+                auto shead = file.get_header_object("content-disposition");
+                bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
+                if (isMD5Match) {
+                    file_name = FileUtils::GetPairFileNameFull(shead.params);
+                    std::string saveFilePath = "./upgrades/" + type.body + '/' + file_name;
+                    FileUtils::Save(file.body, saveFilePath);
+                    return SuccessResponse(res);
+                } else {
+                    return FailResponse(res, ErrorCode::MD5_MISMATCH, "md5 mismatch");
+                }
             }
-        }
-    });
+        });
 }

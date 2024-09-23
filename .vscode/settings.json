@@ -89,10 +89,15 @@
   "cmake.configureArgs": [
     "-DCMAKE_BUILD_TYPE=Debug"
   ],
-  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
   "C_Cpp.default.cppStandard": "gnu++14",
   "C_Cpp.default.cStandard": "gnu11",
   "[cpp]": {
     "editor.defaultFormatter": "xaver.clang-format"
-  }
+  },
+  "C_Cpp.inlayHints.autoDeclarationTypes.enabled": true,
+  "C_Cpp.inlayHints.parameterNames.enabled": true,
+  "C_Cpp.inlayHints.autoDeclarationTypes.showOnLeft": true,
+  "C_Cpp.inlayHints.referenceOperator.enabled": true,
+  "C_Cpp.inlayHints.referenceOperator.showSpace": true
 }
