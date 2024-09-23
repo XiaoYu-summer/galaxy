@@ -50,8 +50,12 @@ void UpgradeController::InitRoutes(crow::SimpleApp& app) {
                     file_name = FileUtils::GetPairFileNameFull(shead.params);
                     std::string save_file_path = "./upgrades/" + type.body + '/' + file_name;
                     FileUtils::Save(file.body, save_file_path);
-                    ServiceUpgradeService::Upgrade(save_file_path, file_name);
-                    return SuccessResponse(res);
+                    try {
+                        ServiceUpgradeService::Upgrade(save_file_path, file_name);
+                        return SuccessResponse(res);
+                    } catch (const std::exception& e) {
+                        return FailResponse(res, ErrorCode::UPGRADE_ERROR, e.what());
+                    }
                 } else {
                     return FailResponse(res, ErrorCode::MD5_MISMATCH, "md5 mismatch");
                 }

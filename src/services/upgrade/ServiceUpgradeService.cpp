@@ -21,6 +21,8 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         bp::system(restart);
     } catch (const std::exception& e) {
         CROW_LOG_ERROR << "Error during upgrade: " << e.what();
+        //  将错误继续往外抛
+        throw e;
     }
 }
 }  // namespace ServiceUpgradeService
