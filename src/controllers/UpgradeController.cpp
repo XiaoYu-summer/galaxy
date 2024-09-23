@@ -3,6 +3,7 @@
 
 #include "code/ErrorCode.h"
 #include "controllers/UpgradeController.h"
+#include "services/upgrade/ServiceUpgradeService.h"
 #include "utils/FileUtils.h"
 #include "utils/ResUtils.h"
 
@@ -47,8 +48,9 @@ void UpgradeController::InitRoutes(crow::SimpleApp& app) {
                 bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
                 if (isMD5Match) {
                     file_name = FileUtils::GetPairFileNameFull(shead.params);
-                    std::string saveFilePath = "./upgrades/" + type.body + '/' + file_name;
-                    FileUtils::Save(file.body, saveFilePath);
+                    std::string save_file_path = "./upgrades/" + type.body + '/' + file_name;
+                    FileUtils::Save(file.body, save_file_path);
+                    ServiceUpgradeService::Upgrade(save_file_path, file_name);
                     return SuccessResponse(res);
                 } else {
                     return FailResponse(res, ErrorCode::MD5_MISMATCH, "md5 mismatch");
