@@ -71,7 +71,8 @@ pipeline {
                     // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
                     // 打包 Release 目录
-                    sh "tar -czvf ${tar_name} -C ${buildDir} ."
+                    sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branch}_${hash}_${count}"
+                    sh "tar -czvf ${tar_name} -C ${buildDir}/../galaxy_${branch}_${hash}_${count} ."
 
                     sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
                     
