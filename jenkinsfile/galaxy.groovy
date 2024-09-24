@@ -76,14 +76,14 @@ const std::string count = \\"${count}\\";
                     }
 
                     // def timestamp = new Date().format('yyyyMMdd_HHmmss')
-                    // 获取当前分支的hash 和 count
-                    def tar_name = "galaxy_${branchx}_${hash}_${count}.tar.gz"
                     // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
                     def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
                     def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     def branchx = branch.replaceAll("/", "_")
                     branchx = branchx.replaceAll("refs_heads_", "")
+                    // 获取当前分支的hash 和 count
+                    def tar_name = "galaxy_${branchx}_${hash}_${count}.tar.gz"
                     // 打包 Release 目录
                     sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
                     sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
