@@ -57,44 +57,51 @@ const std::string count = \\"${count}\\";
         stage('Package and Upload') {
             steps {
                 script {
-                    def buildDir = "${WORKSPACE}/build/Release"
-                    def buildCompleteMarker = "${WORKSPACE}/build/.build_complete"
-                    
-                    // 检查构建是否完成
-                    if (!fileExists(buildCompleteMarker)) {
-                        error "构建完成标记文件不存在，构建可能未正常完成"
+                    wrap([$class: 'BuildUser'])
+                    {
+                        def buildDir = "${WORKSPACE}/build/Release"
+                        def buildCompleteMarker = "${WORKSPACE}/build/.build_complete"
+                        
+                        // 检查构建是否完成
+                        if (!fileExists(buildCompleteMarker)) {
+                            error "构建完成标记文件不存在，构建可能未正常完成"
+                        }
+                        
+                        // 检查构建目录是否存在
+                        if (!fileExists(buildDir)) {
+                            error "构建目录 ${buildDir} 不存在，构建可能失败"
+                        }
+                        
+                        // 检查构建产物是否存在（假设主要产物名为 'galaxy'）
+                        if (!fileExists("${buildDir}/galaxy")) {
+                            error "构建产物 'galaxy' 不存在，构建可能失败"
+                        }
+
+                        // def timestamp = new Date().format('yyyyMMdd_HHmmss')
+                        // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
+                        sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
+                        def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
+                        def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                        def branchx = branch.replaceAll("/", "_")
+                        branchx = branchx.replaceAll("refs_heads_", "")
+                        // 获取当前分支的hash 和 count
+                        def tar_name = "galaxy_${branchx}_${hash}_${count}.tar.gz"
+                        // 打包 Release 目录
+                        sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
+                        sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
+                        sh "tar -czvf ${tar_name} ${buildDir}/../galaxy_${branchx}_${hash}_${count} ./galaxy"
+
+                        sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
+                        sh """
+                            curl -O https://artifactory.gz.cvte.cn:443/artifactory/npm-local/send_message/message.py
+                            python3 message.py -u "${BUILD_USER_ID}" -t 'aoip-server' -c "aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name" 
+                        """
+                        // 清理临时文件
+                        sh "rm ${tar_name}"
+
+                        env.Gaxaly_URL = "https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
                     }
                     
-                    // 检查构建目录是否存在
-                    if (!fileExists(buildDir)) {
-                        error "构建目录 ${buildDir} 不存在，构建可能失败"
-                    }
-                    
-                    // 检查构建产物是否存在（假设主要产物名为 'galaxy'）
-                    if (!fileExists("${buildDir}/galaxy")) {
-                        error "构建产物 'galaxy' 不存在，构建可能失败"
-                    }
-
-                    // def timestamp = new Date().format('yyyyMMdd_HHmmss')
-                    // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
-                    sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
-                    def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
-                    def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def branchx = branch.replaceAll("/", "_")
-                    branchx = branchx.replaceAll("refs_heads_", "")
-                    // 获取当前分支的hash 和 count
-                    def tar_name = "galaxy_${branchx}_${hash}_${count}.tar.gz"
-                    // 打包 Release 目录
-                    sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
-                    sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
-                    sh "tar -czvf ${tar_name} ${buildDir}/../galaxy_${branchx}_${hash}_${count} ./galaxy"
-
-                    sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
-                    
-                    // 清理临时文件
-                    sh "rm ${tar_name}"
-
-                    env.Gaxaly_URL = "https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
                 }
             }
         }
