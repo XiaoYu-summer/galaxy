@@ -1,12 +1,11 @@
 #define CROW_STATIC_DIRECTORY "assets/"
 #define CROW_STATIC_ENDPOINT "/assets/<path>"
-#include <crow.h>
 
 #include "Routes.h"
 #include "utils/LogUtils.h"
-
 int main() {
-    crow::SimpleApp app;
+    CrowApp app{Session{crow::CookieParser::Cookie("_sso_token_").max_age(/*one day*/ 24 * 60 * 60).path("/"), 4,
+                        crow::InMemoryStore{}}};
     // 设置日志级别
     crow::logger::setLogLevel(crow::LogLevel::INFO);
     FileLogHandler logger;

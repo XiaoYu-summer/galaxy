@@ -81,7 +81,9 @@
     "span": "cpp",
     "valarray": "cpp",
     "unordered_set": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "set": "cpp",
+    "typeindex": "cpp"
   },
   "cmake.configureOnOpen": true,
   "cmake.sourceDirectory": "${workspaceFolder}",

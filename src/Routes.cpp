@@ -1,8 +1,8 @@
 #include "Routes.h"
-#include "controllers/HelloController.h"
 #include "controllers/UpgradeController.h"
+#include "controllers/VersionController.h"
 
-void SetupRoutes(crow::SimpleApp& app) {
-    HelloController::InitRoutes(app);
+void SetupRoutes(CrowApp& app) {
+    VersionController::InitRoutes(app);
     UpgradeController::InitRoutes(app);
 };

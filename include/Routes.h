@@ -1,4 +1,4 @@
 #pragma once
-#include <crow.h>
+#include "types/App.h"
 
-void SetupRoutes(crow::SimpleApp& app);
+void SetupRoutes(CrowApp& app);

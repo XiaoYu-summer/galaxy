@@ -20,7 +20,7 @@ bool ValidateUpgradeParams(crow::multipart::message& form_data) {
            valid_types.find(type.body) == valid_types.end();
 }
 
-void UpgradeController::InitRoutes(crow::SimpleApp& app) {
+void UpgradeController::InitRoutes(CrowApp& app) {
     /**
      * 生成CROW Route 对应的代码
      * 路径 /resource/v1/update
