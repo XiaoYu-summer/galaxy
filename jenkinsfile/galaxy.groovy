@@ -25,17 +25,14 @@ pipeline {
                     def branchx = branch.replaceAll("/", "_")
                     branchx = branchx.replaceAll("refs_heads_", "")
                     sh """
-                        echo "
-                            #pragma once
+                        echo "#pragma once
+#include <string>
 
-                            #include <string>
-
-                            namespace VersionInfo {
-                            const std::string version = '${branchx}';
-                            const std::string hash = '${hash}';
-                            const std::string count = '${count}';
-                            }  // namespace VersionInfo
-                        " > include/Version.h
+namespace VersionInfo {
+const std::string version = \\"${branchx}\\";
+const std::string hash = \\"${hash}\\";
+const std::string count = \\"${count}\\";
+}  // namespace VersionInfo" > include/Version.h
                     """
                     withDockerRegistry([credentialsId: '6e5c1650-13f9-435e-ad7e-c0a20d0774a1', url: "${docker_registry}"]) {
                         docker.image(build_image).inside("-u root") {
