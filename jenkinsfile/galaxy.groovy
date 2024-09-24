@@ -85,7 +85,8 @@ pipeline {
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
                     // 打包 Release 目录
                     sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
-                    sh "tar -czvf ${tar_name} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
+                    sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
+                    sh "tar -czvf ${tar_name} ${buildDir}/../galaxy_${branchx}_${hash}_${count} ./galaxy"
 
                     sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
                     
