@@ -3,10 +3,6 @@ def branch = "${BRANCH}"
 def tag = ""
 def build_image = 'registry.gz.cvte.cn/1602/aoip-ubuntu:1.1.1'
 def docker_registry = 'https://registry.gz.cvte.cn'
-def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
-def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-def branchx = branch.replaceAll("/", "_")
-branchx = branchx.replaceAll("refs_heads_", "")
 
 pipeline {
     agent {
@@ -24,21 +20,25 @@ pipeline {
             steps {
                 script {
                     echo "docker构建开始：${branch}"
+                    def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
+                    def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def branchx = branch.replaceAll("/", "_")
+                    branchx = branchx.replaceAll("refs_heads_", "")
+                    sh """
+                        echo "
+                            #pragma once
+
+                            #include <string>
+
+                            namespace VersionInfo {
+                            const std::string version = '${branchx}';
+                            const std::string hash = '${hash}';
+                            const std::string count = '${count}';
+                            }  // namespace VersionInfo
+                        " > include/Version.h
+                    """
                     withDockerRegistry([credentialsId: '6e5c1650-13f9-435e-ad7e-c0a20d0774a1', url: "${docker_registry}"]) {
                         docker.image(build_image).inside("-u root") {
-                            sh '''
-                                echo "
-                                    #pragma once
-
-                                    #include <string>
-
-                                    namespace VersionInfo {
-                                    const std::string version = "${branchx}";
-                                    const std::string hash = "${hash}";
-                                    const std::string count = "${count}";
-                                    }  // namespace VersionInfo
-                                " > include/Version.h
-                            '''
                             sh '''
                                 export PATH=/firefly_buildroot_rk3308_release/rk3308_linux_release_v1.5.0a_20221212/buildroot/output/firefly_rk3308_release/host/bin:$PATH
                                 mkdir build
@@ -83,6 +83,10 @@ pipeline {
                     def tar_name = "galaxy_${branchx}_${hash}_${count}.tar.gz"
                     // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                     sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
+                    def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
+                    def hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def branchx = branch.replaceAll("/", "_")
+                    branchx = branchx.replaceAll("refs_heads_", "")
                     // 打包 Release 目录
                     sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
                     sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
