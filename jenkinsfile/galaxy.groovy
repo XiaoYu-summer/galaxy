@@ -77,7 +77,7 @@ const std::string count = \\"${count}\\";
                             error "构建产物 'galaxy' 不存在，构建可能失败"
                         }
 
-                        // def timestamp = new Date().format('yyyyMMdd_HHmmss')
+                        def timestamp = new Date().format('yyyyMMddHHmmss')
                         // 删除 ${buildDir} 下的  Makefile generators CMakeFiles CMakeCache.txt cmake_install.cmake
                         sh "rm -rf ${buildDir}/Makefile ${buildDir}/generators ${buildDir}/CMakeFiles ${buildDir}/CMakeCache.txt ${buildDir}/cmake_install.cmake"
                         def count = sh(script: 'git rev-list --count HEAD --no-merges', returnStdout: true).trim()
@@ -90,17 +90,16 @@ const std::string count = \\"${count}\\";
                         sh "cp -r ${buildDir} ${buildDir}/../galaxy_${branchx}_${hash}_${count}"
                         sh "echo 'galaxy_${branchx}_${hash}_${count}' > ./galaxy"
                         sh "tar -czvf ${tar_name} ${buildDir}/../galaxy_${branchx}_${hash}_${count} ./galaxy"
-
-                        sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name\"".replace("\n","")
+                        sh "curl -uzhangyong1924:AP8genobRHGk28aMVufLNonDeCuZVQXr2gwk1Z -T  ./$tar_name  \"https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$timestamp/$tar_name\"".replace("\n","")
                         sh """
                             curl -O https://artifactory.gz.cvte.cn:443/artifactory/npm-local/send_message/message.py
-                            python3 message.py -u "${BUILD_USER_ID}" -t 'aoip-server' -c "aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name" 
-                            curl "http://message-board.gz.mindlinker.cn/send-message?message=aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
+                            python3 message.py -u "${BUILD_USER_ID}" -t 'aoip-server' -c "aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$timestamp/$tar_name" 
+                            curl "http://message-board.gz.mindlinker.cn/send-message?message=aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$timestamp/$tar_name"
                         """
                         // 清理临时文件
                         sh "rm ${tar_name}"
 
-                        env.Gaxaly_URL = "https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
+                        env.Gaxaly_URL = "https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$timestamp/$tar_name"
                     }
                     
                 }
