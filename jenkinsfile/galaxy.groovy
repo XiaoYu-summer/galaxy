@@ -95,6 +95,7 @@ const std::string count = \\"${count}\\";
                         sh """
                             curl -O https://artifactory.gz.cvte.cn:443/artifactory/npm-local/send_message/message.py
                             python3 message.py -u "${BUILD_USER_ID}" -t 'aoip-server' -c "aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name" 
+                            curl "http://message-board.gz.mindlinker.cn/send-message?message=aoip-server:https://artifactory.gz.cvte.cn/artifactory/binaries/1602/private-be/aoip/$tar_name"
                         """
                         // 清理临时文件
                         sh "rm ${tar_name}"
