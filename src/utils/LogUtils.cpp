@@ -1,10 +1,19 @@
+#include <boost/filesystem.hpp>
+#include <iostream>
+
 #include "utils/LogUtils.h"
 
 FileLogHandler::FileLogHandler() {
     try {
         auto max_size = 1048576 * 20;
         auto max_files = 10;
-        m_logger = spdlog::rotating_logger_mt("galaxy_logger", "../logs/galaxy-server.log", max_size, max_files);
+        boost::filesystem::path current_path = boost::filesystem::current_path();
+        std::cout << "Current path: " << current_path << std::endl;
+
+        // 拼接日志文件路径
+        boost::filesystem::path log_path = current_path / "logs" / "galaxy-server.log";
+        std::cout << "Log path: " << log_path << std::endl;
+        m_logger = spdlog::rotating_logger_mt("galaxy_logger", log_path.string(), max_size, max_files);
         m_logger->set_pattern("%Y-%m-%d %H:%M:%S[%l] %v");
     } catch (const spdlog::spdlog_ex& ex) {
         std::cout << "Log init failed: " << ex.what() << std::endl;
