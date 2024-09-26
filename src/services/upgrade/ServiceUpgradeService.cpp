@@ -18,7 +18,7 @@ void Upgrade(const std::string& file, const std::string& file_name) {
 // 如果是调试就不实际解压文件
 #ifdef NDEBUG
         boost::filesystem::path app_current_path = boost::filesystem::current_path();
-        FileUtils::ExtractTarGz(save_file_path.string(), app_current_path.parent_path().string());
+        FileUtils::ExtractTarGz(file, app_current_path.parent_path().string());
         // 重启应用
         std::string restart = "/etc/init.d/S99galaxy restart";
         boost::process::system(restart);
