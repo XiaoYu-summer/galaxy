@@ -15,7 +15,7 @@ bool ValidateUpgradeParams(crow::multipart::message& form_data) {
 
     auto shead = file.get_header_object("content-disposition");
 
-    std::unordered_set<std::string> valid_types = {"view", "service", "firmware"};
+    std::unordered_set<std::string> valid_types = {"view", "service", "firmware", "system"};
 
     return shead.params.size() == 0 || type.body.empty() || md5.body.empty() ||
            valid_types.find(type.body) == valid_types.end();
@@ -55,8 +55,9 @@ void UpgradeController::InitRoutes(CrowApp& app) {
                     try {
                         if (type.body == "service") {
                             ServiceUpgradeService::Upgrade(save_file_path.string(), file_name);
-                        } else {
-                            // 处理其他类型
+                        } else if (type.body == "system") {
+                        } else if (type.body == "view") {
+                        } else if (type.body == "firmware") {
                         }
                         return SuccessResponse(res);
                     } catch (const std::exception& e) {

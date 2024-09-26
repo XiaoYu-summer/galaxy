@@ -26,7 +26,7 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         std::cout << "Build type: Debug, Not Extract File" << std::endl;
 #endif
     } catch (const std::exception& e) {
-        CROW_LOG_ERROR << "Error during upgrade: " << e.what();
+        CROW_LOG_ERROR << "Error During Service Upgrade: " << e.what();
         //  将错误继续往外抛
         throw e;
     }
