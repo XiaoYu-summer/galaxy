@@ -17,7 +17,7 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         // 使用boost 复制file到 /userdata 目录
         boost::filesystem::path source(file);
         boost::filesystem::path destination("/userdata/update.img");
-        boost::filesystem::copy_file(source, destination, boost::filesystem::copy_option::overwrite_if_exists);
+        boost::filesystem::copy_file(source, destination, boost::filesystem::copy_options::overwrite_existing);
         // 重启应用
         std::string restart =
             "updateEngine --image_url=/userdata/update.img --misc=update --savepath=/userdata/update.img --reboot &";
