@@ -1,3 +1,4 @@
+#include <boost/filesystem.hpp>
 #include <initializer_list>
 #include <unordered_set>
 
@@ -48,8 +49,8 @@ void UpgradeController::InitRoutes(CrowApp& app) {
                 bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
                 if (isMD5Match) {
                     file_name = FileUtils::GetPairFileNameFull(shead.params);
-                    boost::filesystem::path save_file_path =
-                        FileUtils::app_current_path / "upgrades" / type.body / file_name;
+                    boost::filesystem::path app_current_path = boost::filesystem::current_path();
+                    boost::filesystem::path save_file_path = app_current_path / "upgrades" / type.body / file_name;
                     FileUtils::Save(file.body, save_file_path.string());
                     try {
                         if (type.body == "service") {

@@ -1,10 +1,8 @@
 #pragma once
 #include <crow.h>
 
-#include <boost/filesystem.hpp>
 #include <string>
 namespace FileUtils {
-inline boost::filesystem::path app_current_path = boost::filesystem::current_path();
 
 std::string Save(const std::string& file, const std::string& path);
 std::string GetPairFileNameFull(const std::unordered_map<std::string, std::string>& map);
