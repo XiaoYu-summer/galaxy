@@ -48,10 +48,15 @@ void UpgradeController::InitRoutes(CrowApp& app) {
                 bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
                 if (isMD5Match) {
                     file_name = FileUtils::GetPairFileNameFull(shead.params);
-                    std::string save_file_path = "./upgrades/" + type.body + '/' + file_name;
-                    FileUtils::Save(file.body, save_file_path);
+                    boost::filesystem::path save_file_path =
+                        FileUtils::app_current_path / "upgrades" / type.body / file_name;
+                    FileUtils::Save(file.body, save_file_path.string());
                     try {
-                        ServiceUpgradeService::Upgrade(save_file_path, file_name);
+                        if (type.body == "service") {
+                            ServiceUpgradeService::Upgrade(save_file_path.string(), file_name);
+                        } else {
+                            // 处理其他类型
+                        }
                         return SuccessResponse(res);
                     } catch (const std::exception& e) {
                         return FailResponse(res, ErrorCode::UPGRADE_ERROR, e.what());

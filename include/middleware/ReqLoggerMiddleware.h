@@ -8,8 +8,8 @@ struct ReqLoggerMiddleware {
 
     void before_handle(crow::request& req, crow::response& res, context& ctx) {
         if (!req.get_header_value("x-apm-traceid").empty()) {
-            CROW_LOG_INFO << "Request: " << method_name(req.method) << " " << req.url << " "
-                          << req.get_header_value("x-apm-traceid");
+            CROW_LOG_INFO << "Request: " << method_name(req.method) << " " << req.url
+                          << " id: " << req.get_header_value("x-apm-traceid");
         }
     }
 
