@@ -1,3 +1,4 @@
+#include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 
 #include "services/upgrade/SystemUpgradeService.h"
