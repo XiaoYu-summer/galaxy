@@ -5,6 +5,7 @@
 #include "code/ErrorCode.h"
 #include "controllers/UpgradeController.h"
 #include "services/upgrade/ServiceUpgradeService.h"
+#include "services/upgrade/SystemUpgradeService.h"
 #include "utils/FileUtils.h"
 #include "utils/ResUtils.h"
 
@@ -56,6 +57,7 @@ void UpgradeController::InitRoutes(CrowApp& app) {
                         if (type.body == "service") {
                             ServiceUpgradeService::Upgrade(save_file_path.string(), file_name);
                         } else if (type.body == "system") {
+                            SystemUpgradeService::Upgrade(save_file_path.string(), file_name);
                         } else if (type.body == "view") {
                         } else if (type.body == "firmware") {
                         }

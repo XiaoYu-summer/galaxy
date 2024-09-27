@@ -21,7 +21,8 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         // 重启应用
         std::string restart =
             "updateEngine --image_url=/userdata/update.img --misc=update --savepath=/userdata/update.img --reboot &";
-        boost::process::system(restart);
+        boost::process::child c(restart, boost::process::std_out > stdout, boost::process::std_err > stderr);
+        c.detach();  // 使子进程在后台运行
 #else
         std::cout << "Build type: Debug, System Not Upgrade" << std::endl;
 #endif
