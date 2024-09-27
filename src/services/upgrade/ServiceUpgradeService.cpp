@@ -20,8 +20,9 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         boost::filesystem::path app_current_path = boost::filesystem::current_path();
         FileUtils::ExtractTarGz(file, app_current_path.parent_path().string());
         // 重启应用
-        std::string restart = "/etc/init.d/S99galaxy restart";
-        boost::process::system(restart);
+        std::string restart = "sleep 3 && /etc/init.d/S99galaxy restart";
+        boost::process::child c(restart, boost::process::std_out > stdout, boost::process::std_err > stderr);
+        c.detach();  // 使子进程在后台运行
 #else
         std::cout << "Build type: Debug, Not Extract File" << std::endl;
 #endif
