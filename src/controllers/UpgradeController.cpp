@@ -35,6 +35,11 @@ void UpgradeController::InitRoutes(CrowApp& app) {
      */
     CROW_ROUTE(app, "/resource/v1/update")
         .methods("POST"_method)([&app](const crow::request& req, crow::response& res) {
+            // 判断multipart/form-data的请求体大小，如果超过100M则直接返回文件过大
+            auto content_length = req.get_header_value("Content-Length");
+            if (content_length.empty() || std::stoul(content_length) > 100 * 1024 * 1024) {
+                return FailResponse(res, ErrorCode::FILE_TOO_LARGE, "file too large");
+            }
             std::string file_name;
             crow::multipart::message form_data(req);
             if (ValidateUpgradeParams(form_data)) {
