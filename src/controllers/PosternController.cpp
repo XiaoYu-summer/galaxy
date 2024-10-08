@@ -1,3 +1,5 @@
+#include <boost/process.hpp>
+
 #include "controllers/PosternController.h"
 #include "utils/ResUtils.h"
 
