@@ -84,7 +84,8 @@
     "shared_mutex": "cpp",
     "set": "cpp",
     "typeindex": "cpp",
-    "type_traits": "cpp"
+    "type_traits": "cpp",
+    "iterator": "cpp"
   },
   "cmake.configureOnOpen": true,
   "cmake.sourceDirectory": "${workspaceFolder}",
