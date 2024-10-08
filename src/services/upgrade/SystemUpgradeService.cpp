@@ -10,14 +10,15 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         /**
          * 校验文件格式
          */
-        if (!FileUtils::CheckFileFormat(file_name, ".img")) {
+        if (!FileUtils::CheckFileFormat(file_name, ".img.tar.gz")) {
             throw std::runtime_error("File format error");
         }
 #ifdef NDEBUG
-        // 使用boost 复制file到 /userdata 目录
-        boost::filesystem::path source(file);
-        boost::filesystem::path destination("/userdata/update.img");
-        boost::filesystem::copy_file(source, destination, boost::filesystem::copy_options::overwrite_existing);
+        FileUtils::ExtractTarGz(file, "/userdata");
+        // 将解压的文件重命名
+        boost::filesystem::path source = "/userdata/" + file_name;
+        boost::filesystem::path destination = "/userdata/update.img";
+        boost::filesystem::rename(source, destination);
         // 重启应用
         std::string restart =
             "updateEngine --image_url=/userdata/update.img --misc=update --savepath=/userdata/update.img --reboot &";
