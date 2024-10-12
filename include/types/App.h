@@ -2,7 +2,8 @@
 #include <crow.h>
 
 #include "crow/middlewares/session.h"
+#include "middleware/PassportMiddleware.h"
 #include "middleware/ReqLoggerMiddleware.h"
 
 using Session = crow::SessionMiddleware<crow::InMemoryStore>;
-using CrowApp = crow::App<crow::CookieParser, Session, ReqLoggerMiddleware>;
+using CrowApp = crow::App<crow::CookieParser, Session, ReqLoggerMiddleware, PassportMiddleware>;
