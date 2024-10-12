@@ -1,10 +1,10 @@
 #include "Routes.h"
 #include "controllers/PosternController.h"
+#include "controllers/SystemController.h"
 #include "controllers/UpgradeController.h"
-#include "controllers/VersionController.h"
 
 void SetupRoutes(CrowApp& app) {
-    VersionController::InitRoutes(app);
+    SystemController::InitRoutes(app);
     UpgradeController::InitRoutes(app);
     PosternController::InitRoutes(app);
 };
