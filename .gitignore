@@ -2,3 +2,6 @@
 .DS_Store
 /logs
 /upgrades
+/CMakeFiles
+CmakeCache.txt
+/out

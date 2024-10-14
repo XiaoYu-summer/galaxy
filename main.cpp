@@ -1,3 +1,4 @@
+#pragma execution_character_set("utf-8")
 #define CROW_STATIC_DIRECTORY "assets/"
 #define CROW_STATIC_ENDPOINT "/assets/<path>"
 
@@ -10,7 +11,7 @@ int main() {
                         crow::InMemoryStore{}},
                 PassportMiddleware{app}};
     // 设置日志级别
-    crow::logger::setLogLevel(crow::LogLevel::INFO);
+    crow::logger::setLogLevel(crow::LogLevel::Info);
     FileLogHandler logger;
     crow::logger::setHandler(&logger);
 

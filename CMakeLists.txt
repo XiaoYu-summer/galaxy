@@ -7,8 +7,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 endif()
 
+# 设置 CMake policy CMP0091 为 NEW
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 # Conan 集成
-include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/build/build/generators/conan_toolchain.cmake)
 
 # 定义资源目录
 set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
