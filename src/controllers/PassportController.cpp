@@ -1,4 +1,3 @@
-#include <boost/process.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -15,8 +14,9 @@ void PassportController::InitRoutes(CrowApp& app) {
         boost::uuids::uuid uuid = boost::uuids::random_generator()();
         std::string token = boost::uuids::to_string(uuid);
 
-        // 设置 token 和过期时间
-        session.set(TOKEN_KEY, token, std::chrono::hours(2));
+        // 设置 token
+        session.set(TOKEN_KEY, token);
+
         return SuccessResponse(res, "success");
     });
 }

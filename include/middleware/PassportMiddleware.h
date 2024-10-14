@@ -9,18 +9,7 @@
 
 using Session = crow::SessionMiddleware<crow::InMemoryStore>;
 
-bool ShouldSkipAuth(const std::string& path) {
-    static const std::unordered_set<std::string> skipPaths = {"/passport", "/version", "/assets", "/health",
-                                                              "/postern"};
-
-    for (const auto& skipPath : skipPaths) {
-        if (path.compare(0, skipPath.size(), skipPath) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
+static const std::unordered_set<std::string> skipPaths = {"/passport", "/version", "/assets", "/health", "/postern"};
 struct PassportMiddleware {
     struct context {};
 
@@ -32,8 +21,11 @@ struct PassportMiddleware {
         std::string path = req.url;
         std::cout << "path: " << path << std::endl;
         // 如果是/passport开头相关的请求，不需要校验
-        if (ShouldSkipAuth(path)) {
-            return;
+
+        for (const auto& skipPath : skipPaths) {
+            if (path.compare(0, skipPath.size(), skipPath) == 0) {
+                return;
+            }
         }
         // 获取请求头中的token
         std::string authToken = req.get_header_value("Authorization");
