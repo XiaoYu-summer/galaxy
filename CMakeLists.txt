@@ -15,26 +15,17 @@ if(WIN32)
     endif()
 endif()
 
-# 定义包含 Conan 工具链文件的函数
-function(include_conan_toolchain toolchain_path)
-    if(EXISTS ${toolchain_path})
-        include(${toolchain_path})
-    else()
-        message(FATAL_ERROR "Conan toolchain file not found: ${toolchain_path}")
-    endif()
-endfunction()
-
 # 根据不同的操作系统环境包含相应的 Conan 工具链文件
 if(APPLE)
     set(CONAN_TOOLCHAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}/generators/conan_toolchain.cmake")
 elseif(WIN32)
-    set(CONAN_TOOLCHAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/generators/conan_toolchain.cmake")
+    set(CONAN_TOOLCHAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/build/generators/conan_toolchain.cmake")
 elseif(UNIX)
     set(CONAN_TOOLCHAIN_PATH "${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake")
 endif()
 
 # 包含 Conan 工具链文件
-include_conan_toolchain(${CONAN_TOOLCHAIN_PATH})
+include(${CONAN_TOOLCHAIN_PATH})
 
 # 定义资源目录
 set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
