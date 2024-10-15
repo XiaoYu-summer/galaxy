@@ -29,6 +29,9 @@ FileLogHandler::FileLogHandler() {
 }
 
 void FileLogHandler::log(std::string message, crow::LogLevel level) {
+#ifdef NDEBUG
+    std::cout << message << std::endl;
+#endif
     switch (level) {
         case crow::LogLevel::Debug:
             m_logger->debug(message);

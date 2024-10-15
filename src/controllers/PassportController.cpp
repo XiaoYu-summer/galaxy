@@ -15,8 +15,10 @@ void PassportController::InitRoutes(CrowApp& app) {
         std::string token = boost::uuids::to_string(uuid);
         // 设置 token
         session.set(TOKEN_KEY, token);
-        // // 设置过期时间
-        // session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::now() + std::chrono::hours(1));
-        return SuccessResponse(res, "success");
+        // 设置过期时间
+        auto expireTime = std::chrono::system_clock::now() + std::chrono::hours(1);
+        session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(expireTime));
+        crow::json::wvalue r({{"accessToken", token}});
+        return SuccessResponse(res, "success", r);
     });
 }

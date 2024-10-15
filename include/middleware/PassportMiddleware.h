@@ -1,6 +1,8 @@
 #pragma once
 #include <crow.h>
 
+#include <chrono>
+
 #include "Constant.h"
 #include "code/ErrorCode.h"
 #include "crow/middlewares/session.h"
@@ -35,9 +37,18 @@ struct PassportMiddleware {
         // (even with the parameter being a char[])
         // one could also write: session.get<std::string>("user")
         auto token = session.get(TOKEN_KEY, "");
+        auto expireTime = session.get(TOKEN_EXPIRE_KEY, 0);
+        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         // 如果token为空，返回错误信息
-        if (token.empty() || token.empty() || token != authToken) {
-            FailResponse(res, ErrorCode::PARAMS_ERROR, "Authorization");
+        if (token.empty() || authToken.empty() || token != authToken) {
+            return FailResponse(res, ErrorCode::AUTH_ERROR, "Authorization failed");
+        }
+        if (now > expireTime) {
+            FailResponse(res, ErrorCode::AUTH_EXPIRED, "Authorization expired");
+        } else {
+            // 更新过期时间
+            auto expireTime = std::chrono::system_clock::now() + std::chrono::hours(1);
+            session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(expireTime));
         }
     }
 
