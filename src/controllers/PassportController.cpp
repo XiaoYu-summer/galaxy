@@ -13,10 +13,10 @@ void PassportController::InitRoutes(CrowApp& app) {
         // 生成 UUID
         boost::uuids::uuid uuid = boost::uuids::random_generator()();
         std::string token = boost::uuids::to_string(uuid);
-
         // 设置 token
         session.set(TOKEN_KEY, token);
-
+        // // 设置过期时间
+        // session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::now() + std::chrono::hours(1));
         return SuccessResponse(res, "success");
     });
 }

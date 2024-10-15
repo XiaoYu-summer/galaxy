@@ -46,12 +46,13 @@ add_custom_target(copy_assets ALL DEPENDS ${ASSETS_DESTINATION_DIR})
 
 # 匹配 src 和 include 目录中的所有源文件和头文件
 file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
 
 # 添加 include 目录到头文件搜索路径
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # 添加可执行文件
-add_executable(galaxy main.cpp ${SOURCES})
+add_executable(galaxy main.cpp ${SOURCES} ${HEADERS})
 
 add_dependencies(galaxy copy_assets)
 

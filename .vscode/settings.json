@@ -85,7 +85,8 @@
     "set": "cpp",
     "typeindex": "cpp",
     "type_traits": "cpp",
-    "iterator": "cpp"
+    "iterator": "cpp",
+    "chrono": "cpp"
   },
   "cmake.configureOnOpen": true,
   "cmake.sourceDirectory": "${workspaceFolder}",

@@ -43,6 +43,17 @@ conan install . --output-folder=build --build=missing --settings=build_type=Debu
 // 生成解决方案 请自行根据vs版本调整
 cmake -G "Visual Studio 17 2022" -A x64 -B build -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
 ```
+### 配置Visual Studio
+```
+建议安装LLVM：https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.1
+采用最新安装的LLVM中clang-format，而非使用Visual Studio自带的(17.x)
+最新版本是 19.x
+
+工具->选项->C/C++->代码样式->格式设置
+将安装的clang-format路径设置到自定义的clang-format中
+
+Visual Studio 插件建议：Format on Save for 2022
+```
 
 ## 在ubuntu中交叉编译
 ```
