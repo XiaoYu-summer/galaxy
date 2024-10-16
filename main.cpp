@@ -6,6 +6,7 @@
 #include "middleware/PassportMiddleware.h"
 #include "types/App.h"
 #include "utils/LogUtils.h"
+#include "utils/PassportUtils.h"
 int main() {
     CrowApp app{Session{crow::CookieParser::Cookie("_sso_token_").max_age(/*one day*/ 24 * 60 * 60).path("/"), 4,
                         crow::InMemoryStore{}},
@@ -14,10 +15,9 @@ int main() {
     crow::logger::setLogLevel(crow::LogLevel::Info);
     FileLogHandler logger;
     crow::logger::setHandler(&logger);
-
     // 设置路由
     SetupRoutes(app);
-
+    PassportUtils::InitAccountPasswordFile();
     // 启动服务器
     app.port(80).multithreaded().run();
 
