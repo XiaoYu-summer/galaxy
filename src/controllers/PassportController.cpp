@@ -44,4 +44,23 @@ void PassportController::InitRoutes(CrowApp& app) {
         crow::json::wvalue r({{"accessToken", token}});
         return SuccessResponse(res, "success", r);
     });
+    // 修改密码
+    CROW_ROUTE(app, "/passport/v1/password")
+        .methods("PUT"_method)([&app](const crow::request& req, crow::response& res) {
+            // 校验账号密码是否正确
+            auto body = crow::json::load(req.body);
+            if (!body) {
+                return FailResponse(res, ErrorCode::PASSWORD_ERROR, "Invalid request body");
+            }
+            std::string password = body["password"].s();
+            std::string newPassword = body["newPassword"].s();
+            // 读取账号密码
+            auto [storedAccount, storedPassword] = PassportUtils::ReadAccountPassword();
+            if (password != storedPassword) {
+                return FailResponse(res, ErrorCode::OLD_PASSWORD_ERROR, "old password error");
+            }
+            // 写入新密码
+            PassportUtils::WriteAccountPassword(storedAccount, newPassword);
+            return SuccessResponse(res, "success");
+        });
 }
