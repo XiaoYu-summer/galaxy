@@ -55,7 +55,8 @@ void PassportController::InitRoutes(CrowApp& app) {
             std::string password = body["password"].s();
             std::string newPassword = body["newPassword"].s();
             // 读取账号密码
-            auto [storedAccount, storedPassword] = PassportUtils::ReadAccountPassword();
+            std::string storedAccount, storedPassword;
+            std::tie(storedAccount, storedPassword) = PassportUtils::ReadAccountPassword();
             if (password != storedPassword) {
                 return FailResponse(res, ErrorCode::OLD_PASSWORD_ERROR, "old password error");
             }

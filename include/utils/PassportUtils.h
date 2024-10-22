@@ -46,17 +46,17 @@ inline void WriteAccountPassword(const std::string& account, const std::string& 
  * @brief 读取 GetAccountPasswordFile 所返回的JSON文件内容
  * 并返回 account 与 password
  */
-inline std::pair<std::string, std::string> ReadAccountPassword(
-    const std::string& file = GetAccountPasswordFile().string()) {
-    std::ifstream ifs(file);
+inline std::tuple<std::string, std::string> ReadAccountPassword() {
+    std::string accountFile = GetAccountPasswordFile().string();
+    std::ifstream ifs(accountFile);
     if (!ifs) {
-        CROW_LOG_ERROR << "Read Account Password Failed to open file: " << file;
-        return {"", ""};
+        throw std::runtime_error("Failed to open account password file");
     }
+    // 读取文件内容到字符串
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
     crow::json::rvalue accountPassword = crow::json::load(fileContent);
-    return {accountPassword["account"].s(), accountPassword["password"].s()};
+    return std::make_tuple(accountPassword["account"].s(), accountPassword["password"].s());
 }
 
 /**
