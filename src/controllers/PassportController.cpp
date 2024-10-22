@@ -21,7 +21,7 @@ void PassportController::InitRoutes(CrowApp& app) {
         std::string accountFile = PassportUtils::GetAccountPasswordFile().string();
         std::ifstream ifs(accountFile);
         if (!ifs) {
-            Passport::InitAccountPasswordFile();
+            PassportUtils::InitAccountPasswordFile();
             return FailResponse(res, ErrorCode::AUTH_ERROR, "Server Passport not found");
         }
         // 读取文件内容到字符串
