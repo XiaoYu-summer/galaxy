@@ -11,7 +11,8 @@
 
 using Session = crow::SessionMiddleware<crow::InMemoryStore>;
 
-static const std::unordered_set<std::string> skipPaths = {"/passport", "/version", "/assets", "/health", "/postern"};
+static const std::unordered_set<std::string> skipPaths = {"/",       "/passport", "/version",
+                                                          "/assets", "/health",   "/postern"};
 struct PassportMiddleware {
     struct context {};
 
