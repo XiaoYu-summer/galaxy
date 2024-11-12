@@ -1,7 +1,7 @@
 def url = 'git@gitlab.gz.cvte.cn:1602/client/aoip/galaxy.git'
 def branch = "${BRANCH}"
 def tag = ""
-def build_image = 'registry.gz.cvte.cn/1602/aoip_ubuntu_22.04_buildroot_5.1@sha256:82fdbf070567260f74a5aeff868ff9aac5421f1aa0887fcb4beb8247ed887107'
+def build_image = 'registry.gz.cvte.cn/1602/aoip_ubuntu_22.04_buildroot_5.1@sha256:b523686f106539989575dfaf76806d3cbf856837a3b8279ca812dba401fcc584'
 def docker_registry = 'https://registry.gz.cvte.cn'
 
 pipeline {
@@ -40,7 +40,7 @@ const std::string count = \\"${count}\\";
                                 export PATH=/RK3308_LINUX5.10_SDK_RELEASE_V1.4.0_202312920/buildroot/output/latest/host/bin:$PATH
                                 mkdir build
                                 cd build
-                                conan install .. -pr=$(pwd)/../.profile --build missing -s build_type=Release
+                                conan install .. -pr=$(pwd)/../.profile --build missing -s build_type=Release --profile:build=default
                                 cmake .. -DCMAKE_BUILD_TYPE=Release --preset conan-release
                                 cd Release
                                 make
