@@ -37,7 +37,7 @@ const std::string count = \\"${count}\\";
                     withDockerRegistry([credentialsId: '6e5c1650-13f9-435e-ad7e-c0a20d0774a1', url: "${docker_registry}"]) {
                         docker.image(build_image).inside("-u root") {
                             sh '''
-                                export PATH=/RK3308_LINUX5.10_SDK_RELEASE_V1.4.0_202312920/buildroot/output/latest/host/bin:$PATH
+                                export PATH=/RK3308_LINUX5.10_SDK_RELEASE_V1.4.0_202312920/prebuilts/gcc/linux-x86/aarch64/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin:$PATH
                                 mkdir build
                                 cd build
                                 conan install .. -pr=$(pwd)/../.profile --build missing -s build_type=Release --profile:build=default
