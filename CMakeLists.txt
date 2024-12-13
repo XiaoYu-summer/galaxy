@@ -49,12 +49,21 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h")
 
 # 添加 include 目录到头文件搜索路径
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs
+)
+
+# 添加子目录
+add_subdirectory(libs/libaoip)
 
 # 添加可执行文件
 add_executable(galaxy main.cpp ${SOURCES} ${HEADERS})
 
 add_dependencies(galaxy copy_assets)
+
+# 链接 libaoip 库
+target_link_libraries(galaxy PRIVATE jr_aoip)
 
 find_package(Crow REQUIRED)
 
@@ -77,7 +86,7 @@ find_package(LibArchive REQUIRED)
 target_link_libraries(galaxy PUBLIC LibArchive::LibArchive)
 
 # 设置 C++ 标准
-set(CMAKE_CXX_STANDARD 14) # 交叉编译的gcc是6.4版本 所以采用14
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -1,6 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 
+#include "libaoip/include/spdlog_adapter.h"
 #include "utils/FileUtils.h"
 #include "utils/LogUtils.h"
 
@@ -23,6 +24,11 @@ FileLogHandler::FileLogHandler() {
         m_logger->info("Log init success!\n current path: " + app_current_path.string() +
                        "\n log path: " + log_path.string());
         m_logger->flush();
+
+        // 设置 libaoip 使用主项目的日志器
+        auto aoip_logger = std::make_shared<aoip::SpdLogAdapter>(m_logger);
+        aoip::LogManager::instance().setLogger(aoip_logger);
+
     } catch (const spdlog::spdlog_ex& ex) {
         std::cout << "Log init failed: " << ex.what() << std::endl;
     }
