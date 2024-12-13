@@ -18,9 +18,11 @@ conan profile detect
 ```
 ### 生成构建配置
 ```
-conan install . --build missing -s build_type=Debug
-cmake . -DCMAKE_BUILD_TYPE=Debug --preset conan-debug
-cd build/Debug
+mkdir build
+cd build
+conan install .. --build missing -s build_type=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug --preset conan-debug
+cd Debug
 make
 ```
 ### 初始化VScode
