@@ -1,5 +1,188 @@
 # Modern C++ HTTP Server Development Guidelines
 
+## Code Style Guidelines
+
+### 1. Basic Naming Conventions
+
+#### File Names
+- Use PascalCase
+- No underscores
+
+```cpp
+NetworkManager.h
+NetworkManager.cpp
+AudioDevice.h
+StreamProcessor.cpp
+```
+
+#### Class Names
+- Use PascalCase
+- No underscores
+
+```cpp
+class NetworkManager;
+class AudioDevice;
+class StreamProcessor;
+class ConfigurationManager;
+```
+
+#### Member Variables and Parameters
+- Use camelCase
+- No underscores
+
+```cpp
+class AudioDevice {
+private:
+    int sampleRate;
+    bool isActive;
+    std::string deviceName;
+    std::vector<float> audioBuffer;
+};
+
+void processAudio(int bufferSize, float* audioData);
+```
+
+#### Constants, Enums, and Macros
+- Use UPPER_CASE
+- Separate words with underscores
+
+```cpp
+const int MAX_BUFFER_SIZE = 1024;
+#define NETWORK_MTU_SIZE 1500
+
+enum class AudioState {
+    INITIAL,
+    PLAYING,
+    PAUSED,
+    STOPPED
+};
+
+constexpr int DEFAULT_SAMPLE_RATE = 48000;
+```
+
+### 2. Code Formatting
+
+#### Indentation
+- Use 4 spaces for indentation
+- No tabs
+
+```cpp
+class AudioProcessor {
+public:
+    void processBuffer() {
+        if (isActive) {
+            for (int i = 0; i < bufferSize; i++) {
+                // Processing logic
+            }
+        }
+    }
+};
+```
+
+#### Include Paths
+- Use absolute paths
+- No relative paths
+
+```cpp
+// Correct
+#include "Source/Core/AudioDevice.h"
+#include "Source/Utils/Logger.h"
+
+// Incorrect
+#include "../Core/AudioDevice.h"
+#include "../../Utils/Logger.h"
+```
+
+### 3. Additional Guidelines
+
+#### Function Names
+- Use camelCase
+- Should be verb or verb phrases
+
+```cpp
+void processFrame();
+bool isConnected();
+void setConfiguration();
+int getBufferSize();
+```
+
+#### Type Aliases
+- Use PascalCase
+
+```cpp
+using AudioBuffer = std::vector<float>;
+using TimeStamp = int64_t;
+using CallbackFunction = std::function<void(int)>;
+```
+
+#### Member Function Parameters
+
+```cpp
+class NetworkManager {
+public:
+    void sendPacket(const std::vector<uint8_t>& packetData);
+    void setConfiguration(const Configuration& config);
+    bool connect(const std::string& serverAddress, int portNumber);
+};
+```
+
+#### Boolean Variables and Functions
+- Use "is", "has", "should" prefixes
+
+```cpp
+bool isInitialized;
+bool hasConnection;
+bool shouldProcess;
+bool isValidConfig();
+```
+
+### 4. Best Practices
+
+#### File Organization
+
+```cpp
+// MyClass.h
+class MyClass {
+public:
+    // Public interface
+    void processData(int inputSize);
+    
+private:
+    // Private members
+    int bufferSize;
+    bool isActive;
+};
+
+// MyClass.cpp
+#include "Source/MyClass.h"
+
+void MyClass::processData(int inputSize) {
+    // Implementation
+}
+```
+
+#### Namespace Usage
+
+```cpp
+namespace Audio {
+    class Processor {
+        // Class implementation
+    };
+    
+    namespace Utils {
+        // Utility functions
+    }
+}
+```
+
+### Remember:
+- Be consistent throughout the project
+- Follow the style even in small code pieces
+- Use meaningful and descriptive names
+- Keep names concise but clear
+- Consider name length vs clarity
+- Use common programming conventions
+
 ## Project Context
 - Modern C++17 server application
 - Embedded platform (RK3308, 512MB RAM)
