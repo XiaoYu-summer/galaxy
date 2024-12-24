@@ -33,7 +33,7 @@ void UpgradeController::InitRoutes(CrowApp& app) {
      *  - md5 文件md5 string
      * 返回值 void
      */
-    CROW_ROUTE(app, "/resource/v1/update")
+    CROW_ROUTE(app, "/resource/api/v1/update")
         .methods("POST"_method)([&app](const crow::request& req, crow::response& res) {
             // 判断multipart/form-data的请求体大小，如果超过100M则直接返回文件过大
             auto content_length = req.get_header_value("Content-Length");

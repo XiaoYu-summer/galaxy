@@ -4,7 +4,7 @@
 #include "utils/ResUtils.h"
 
 void PosternController::InitRoutes(CrowApp& app) {
-    CROW_ROUTE(app, "/postern/service/restart")
+    CROW_ROUTE(app, "/postern/api/service/restart")
         .methods("POST"_method)([&](const crow::request& req, crow::response& res) {
             auto body = crow::json::load(req.body);
             if (!body || !body.has("pwd") || body["pwd"].s() != "CVTEMH") {
