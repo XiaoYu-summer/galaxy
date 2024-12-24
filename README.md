@@ -87,14 +87,215 @@ cmake .. -DCMAKE_BUILD_TYPE=Release --preset conan-release
 cd Release
 make
 ```
-
 ## 代码规范
-1. 文件名统一大驼峰命名，不要使用下划线
-2. 类名统一大驼峰命名，不要使用下划线
-3. 成员/参数名统一小驼峰命名，不要使用下划线
-4. 常量/枚举/宏名统一大写，单词之间使用下划线分隔
-5. 代码引用路径禁止使用相对路径
-6. TAB缩进为4个空格
+
+### 1. 文件命名
+- 使用大驼峰命名法
+- 不使用下划线
+
+```cpp
+NetworkManager.h
+AudioDevice.cpp
+StreamProcessor.h
+ConfigurationManager.cpp
+```
+
+### 2. 类名、函数名和枚举类型名
+- 使用大驼峰命名法
+- 不使用下划线
+
+```cpp
+// 类名示例
+class NetworkManager;
+class AudioDevice;
+
+// 函数名示例
+void ProcessData();
+bool ValidateInput();
+int CalculateChecksum();
+
+class AudioDevice {
+public:
+    void ProcessAudio();          // 公有方法使用大驼峰
+    bool ValidateFormat();
+    void SetConfiguration();
+    
+private:
+    void HandleError();           // 私有方法也使用大驼峰
+    bool CheckStatus();
+};
+
+// 枚举类型名示例
+enum class AudioState;
+enum class ConnectionState;
+```
+
+### 3. 成员变量和参数
+- 使用小驼峰命名法
+- 私有成员变量末尾加下划线
+- 除了私有成员变量的末尾下划线外，不使用其他下划线
+
+```cpp
+class AudioDevice {
+private:
+    int sampleRate_;              // 私有成员变量末尾加下划线
+    bool isActive_;
+    std::string deviceName_;
+    std::vector<float> audioBuffer_;
+    
+public:
+    // 参数使用小驼峰，不加下划线
+    void ProcessAudio(int bufferSize, float* inputData);
+    void Configure(const std::string& configName);
+};
+```
+
+### 4. 常量、枚举值和宏
+- 枚举类型名使用大驼峰命名法
+- 枚举值使用大写字母，单词间用下划线分隔
+- 常量和宏使用大写字母，单词间用下划线分隔
+
+```cpp
+const int MAX_BUFFER_SIZE = 1024;
+#define NETWORK_MTU_SIZE 1500
+
+enum class AudioState {
+    AUDIO_INITIAL,
+    AUDIO_PLAYING,
+    AUDIO_PAUSED,
+    AUDIO_STOPPED
+};
+
+enum class ConnectionState {
+    CONN_DISCONNECTED,
+    CONN_CONNECTING,
+    CONN_CONNECTED,
+    CONN_ERROR
+};
+```
+
+### 5. 引用路径
+- 使用绝对路径
+- 禁止使用相对路径
+
+```cpp
+// 正确示例
+#include "Source/Core/AudioDevice.h"
+#include "Source/Utils/Logger.h"
+
+// 错误示例
+#include "../Core/AudioDevice.h"
+#include "../../Utils/Logger.h"
+```
+
+### 6. 缩进
+- 使用4个空格进行缩进
+- 不使用制表符(Tab)
+
+```cpp
+class AudioProcessor {
+public:
+    void ProcessBuffer() {
+        if (isActive_) {
+            for (int i = 0; i < bufferSize_; i++) {
+                // 处理逻辑
+            }
+        }
+    }
+    
+private:
+    bool isActive_;
+    int bufferSize_;
+};
+```
+
+### 7. 枚举使用
+- 优先使用enum class而不是enum
+- 遵循上述命名规范
+
+```cpp
+// 推荐使用
+enum class DeviceState {
+    DEVICE_NOT_INITIALIZED,
+    DEVICE_INITIALIZING,
+    DEVICE_RUNNING,
+    DEVICE_ERROR
+};
+
+// 不推荐使用
+enum OldDeviceState {
+    NOT_INITIALIZED,
+    INITIALIZING,
+    RUNNING,
+    ERROR
+};
+```
+
+### 完整示例
+
+```cpp
+// NetworkManager.h
+#include "Source/Core/Common.h"
+#include "Source/Utils/Logger.h"
+
+const int MAX_RETRY_COUNT = 3;
+const char* DEFAULT_HOST = "LOCALHOST";
+
+enum class ConnectionState {
+    CONN_DISCONNECTED,
+    CONN_CONNECTING,
+    CONN_CONNECTED,
+    CONN_ERROR
+};
+
+enum class DeviceType {
+    DEVICE_AUDIO,
+    DEVICE_VIDEO,
+    DEVICE_NETWORK
+};
+
+class NetworkManager {
+public:
+    void Initialize();
+    bool ConnectToServer();
+    void ProcessPacket();
+    void HandleConnection(const std::string& serverName, int portNumber);
+    
+private:
+    bool isConnected_;
+    int retryCount_;
+    std::string serverAddress_;
+    ConnectionState currentState_;
+    DeviceType deviceType_;
+    
+    void HandleError();
+    bool ValidateConnection() {
+        if (currentState_ == ConnectionState::CONN_CONNECTED) {
+            // 处理连接
+            return true;
+        }
+        return false;
+    }
+};
+
+// 全局函数示例
+void ProcessGlobalData();
+bool ValidateSystemInput();
+int CalculateGlobalChecksum();
+```
+
+规范要点总结：
+1. 文件名使用大驼峰命名法
+2. 类名使用大驼峰命名法
+3. 函数名使用大驼峰命名法（包括类方法和全局函数）
+4. 成员变量和参数使用小驼峰命名法
+5. 私有成员变量末尾加下划线
+6. 常量和宏使用大写字母加下划线
+7. 枚举类型名使用大驼峰命名法
+8. 枚举值使用大写字母加下划线
+9. 使用绝对路径
+10. 使用4空格缩进
+11. 优先使用enum class
 
 ### 工具
 

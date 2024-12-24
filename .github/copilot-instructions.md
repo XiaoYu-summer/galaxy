@@ -2,87 +2,100 @@
 
 ## Code Style Guidelines
 
-### 1. Basic Naming Conventions
-
-#### File Names
+### 1. File Names
 - Use PascalCase
 - No underscores
-
+- Examples:
 ```cpp
 NetworkManager.h
-NetworkManager.cpp
-AudioDevice.h
-StreamProcessor.cpp
+AudioDevice.cpp
+StreamProcessor.h
+ConfigurationManager.cpp
 ```
 
-#### Class Names
+### 2. Class Names, Function Names and Enum Type Names
 - Use PascalCase
 - No underscores
-
+- This applies to:
+  * Class names
+  * Global functions
+  * Member functions (both public and private)
+  * Enum type names
+- Examples:
 ```cpp
+// Class names
 class NetworkManager;
 class AudioDevice;
-class StreamProcessor;
-class ConfigurationManager;
+
+// Function names
+void ProcessData();
+bool ValidateInput();
+int CalculateChecksum();
+
+class AudioDevice {
+public:
+    void ProcessAudio();          // Public methods use PascalCase
+    bool ValidateFormat();
+    void SetConfiguration();
+    
+private:
+    void HandleError();           // Private methods also use PascalCase
+    bool CheckStatus();
+};
+
+// Enum type names
+enum class AudioState;
+enum class ConnectionState;
 ```
 
-#### Member Variables and Parameters
+### 3. Member Variables and Parameters
 - Use camelCase
-- No underscores
-
+- Private member variables must end with underscore
+- Parameters use camelCase without underscore
+- Examples:
 ```cpp
 class AudioDevice {
 private:
-    int sampleRate;
-    bool isActive;
-    std::string deviceName;
-    std::vector<float> audioBuffer;
+    int sampleRate_;              // Private members end with underscore
+    bool isActive_;
+    std::string deviceName_;
+    std::vector<float> audioBuffer_;
+    
+public:
+    // Parameters use camelCase without underscore
+    void ProcessAudio(int bufferSize, float* inputData);
+    void Configure(const std::string& configName);
 };
-
-void processAudio(int bufferSize, float* audioData);
 ```
 
-#### Constants, Enums, and Macros
-- Use UPPER_CASE
-- Separate words with underscores
-
+### 4. Constants, Enum Values and Macros
+- Enum type names use PascalCase
+- Enum values use UPPER_CASE with underscores
+- Constants and macros use UPPER_CASE with underscores
+- Examples:
 ```cpp
 const int MAX_BUFFER_SIZE = 1024;
 #define NETWORK_MTU_SIZE 1500
 
 enum class AudioState {
-    INITIAL,
-    PLAYING,
-    PAUSED,
-    STOPPED
+    AUDIO_INITIAL,
+    AUDIO_PLAYING,
+    AUDIO_PAUSED,
+    AUDIO_STOPPED
 };
 
-constexpr int DEFAULT_SAMPLE_RATE = 48000;
-```
-
-### 2. Code Formatting
-
-#### Indentation
-- Use 4 spaces for indentation
-- No tabs
-
-```cpp
-class AudioProcessor {
-public:
-    void processBuffer() {
-        if (isActive) {
-            for (int i = 0; i < bufferSize; i++) {
-                // Processing logic
-            }
-        }
-    }
+enum class ConnectionState {
+    CONN_DISCONNECTED,
+    CONN_CONNECTING,
+    CONN_CONNECTED,
+    CONN_ERROR
 };
 ```
 
-#### Include Paths
+### 5. Include Paths
 - Use absolute paths
 - No relative paths
-
+- Examples:
 ```cpp
 // Correct
 #include "Source/Core/AudioDevice.h"
@@ -93,95 +106,101 @@ public:
 #include "../../Utils/Logger.h"
 ```
 
-### 3. Additional Guidelines
-
-#### Function Names
-- Use camelCase
-- Should be verb or verb phrases
-
+### 6. Indentation
+- Use 4 spaces for indentation
+- No tabs
+- Example:
 ```cpp
-void processFrame();
-bool isConnected();
-void setConfiguration();
-int getBufferSize();
-```
-
-#### Type Aliases
-- Use PascalCase
-
-```cpp
-using AudioBuffer = std::vector<float>;
-using TimeStamp = int64_t;
-using CallbackFunction = std::function<void(int)>;
-```
-
-#### Member Function Parameters
-
-```cpp
-class NetworkManager {
+class AudioProcessor {
 public:
-    void sendPacket(const std::vector<uint8_t>& packetData);
-    void setConfiguration(const Configuration& config);
-    bool connect(const std::string& serverAddress, int portNumber);
-};
-```
-
-#### Boolean Variables and Functions
-- Use "is", "has", "should" prefixes
-
-```cpp
-bool isInitialized;
-bool hasConnection;
-bool shouldProcess;
-bool isValidConfig();
-```
-
-### 4. Best Practices
-
-#### File Organization
-
-```cpp
-// MyClass.h
-class MyClass {
-public:
-    // Public interface
-    void processData(int inputSize);
+    void ProcessBuffer() {
+        if (isActive_) {
+            for (int i = 0; i < bufferSize_; i++) {
+                // Processing logic
+            }
+        }
+    }
     
 private:
-    // Private members
-    int bufferSize;
-    bool isActive;
+    bool isActive_;
+    int bufferSize_;
+};
+```
+
+### 7. Enum Usage
+- Prefer enum class over enum
+- Follow naming conventions as specified above
+- Example:
+```cpp
+// Preferred
+enum class DeviceState {
+    DEVICE_NOT_INITIALIZED,
+    DEVICE_INITIALIZING,
+    DEVICE_RUNNING,
+    DEVICE_ERROR
 };
 
-// MyClass.cpp
-#include "Source/MyClass.h"
-
-void MyClass::processData(int inputSize) {
-    // Implementation
-}
+// Not preferred
+enum OldDeviceState {
+    NOT_INITIALIZED,
+    INITIALIZING,
+    RUNNING,
+    ERROR
+};
 ```
 
-#### Namespace Usage
+### Complete Example
 
 ```cpp
-namespace Audio {
-    class Processor {
-        // Class implementation
-    };
-    
-    namespace Utils {
-        // Utility functions
-    }
-}
-```
+// NetworkManager.h
+#include "Source/Core/Common.h"
+#include "Source/Utils/Logger.h"
 
-### Remember:
-- Be consistent throughout the project
-- Follow the style even in small code pieces
-- Use meaningful and descriptive names
-- Keep names concise but clear
-- Consider name length vs clarity
-- Use common programming conventions
+const int MAX_RETRY_COUNT = 3;
+const char* DEFAULT_HOST = "LOCALHOST";
+
+enum class ConnectionState {
+    CONN_DISCONNECTED,
+    CONN_CONNECTING,
+    CONN_CONNECTED,
+    CONN_ERROR
+};
+
+enum class DeviceType {
+    DEVICE_AUDIO,
+    DEVICE_VIDEO,
+    DEVICE_NETWORK
+};
+
+class NetworkManager {
+public:
+    void Initialize();
+    bool ConnectToServer();
+    void ProcessPacket();
+    void HandleConnection(const std::string& serverName, int portNumber);
+    
+private:
+    bool isConnected_;
+    int retryCount_;
+    std::string serverAddress_;
+    ConnectionState currentState_;
+    DeviceType deviceType_;
+    
+    void HandleError();
+    bool ValidateConnection() {
+        if (currentState_ == ConnectionState::CONN_CONNECTED) {
+            // Handle connection
+            return true;
+        }
+        return false;
+    }
+};
+
+// Global function examples
+void ProcessGlobalData();
+bool ValidateSystemInput();
+int CalculateGlobalChecksum();
+```
 
 ## Project Context
 - Modern C++17 server application
