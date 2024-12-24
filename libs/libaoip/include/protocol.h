@@ -18,7 +18,7 @@ struct ProtocolConfig {
 
     bool enable_logging{true};
     std::string log_file{"protocol.log"};
-    LogLevel log_level{LogLevel::INFO};
+    aoip::LogLevel log_level{aoip::LogLevel::INFO};
     bool broadcast{true};
     size_t recv_buffer_size{4096};
 };

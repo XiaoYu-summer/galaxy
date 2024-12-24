@@ -11,8 +11,6 @@
 
 namespace aoip {
 
-enum class LogLevel { DEBUG, INFO, WARNING, ERROR };
-
 class DefaultLogger : public ILogger {
 public:
     static DefaultLogger& instance() {

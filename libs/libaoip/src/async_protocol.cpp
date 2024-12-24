@@ -38,26 +38,26 @@ void RequestManager::cleanTimeouts() {
 }
 
 AsyncProtocol::AsyncProtocol(const ProtocolConfig& config)
-    : config_(config), socket_(std::make_unique<UDPSocket>(makeUDPConfig(config))), is_running_(false) {
+    : config_(config), socket_(std::make_unique<UDPSocket>(makeUDPConfig(config))), running_(false) {
     if (config.enable_logging) {
-        Logger::instance().setLogFile(config.log_file);
-        Logger::instance().setLogLevel(config.log_level);
+        aoip::DefaultLogger::instance().setLogFile(config.log_file);
+        aoip::DefaultLogger::instance().setLogLevel(config.log_level);
     }
 }
 
 AsyncProtocol::~AsyncProtocol() { stop(); }
 
 void AsyncProtocol::start() {
-    if (is_running_) return;
-    is_running_ = true;
+    if (running_) return;
+    running_ = true;
     receiver_thread_ = std::thread(&AsyncProtocol::receiverLoop, this);
     timeout_thread_ = std::thread(&AsyncProtocol::timeoutLoop, this);
     AOIP_LOG_INFO("AsyncProtocol started");
 }
 
 void AsyncProtocol::stop() {
-    if (!is_running_) return;
-    is_running_ = false;
+    if (!running_) return;
+    running_ = false;
 
     if (receiver_thread_.joinable()) {
         receiver_thread_.join();
@@ -93,7 +93,7 @@ void AsyncProtocol::receiverLoop() {
     std::string from_ip;
     uint16_t from_port;
 
-    while (is_running_) {
+    while (running_) {
         try {
             if (!socket_->recvFrom(buffer, from_ip, from_port)) {
                 continue;
@@ -118,7 +118,7 @@ void AsyncProtocol::receiverLoop() {
 }
 
 void AsyncProtocol::timeoutLoop() {
-    while (is_running_) {
+    while (running_) {
         try {
             request_manager_.cleanTimeouts();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
