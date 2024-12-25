@@ -1,4 +1,4 @@
-#include "async_protocol.h"
+#include "AsyncProtocol.h"
 
 namespace aoip {
 
@@ -40,7 +40,9 @@ void RequestManager::CleanTimeouts() {
 }
 
 AsyncProtocol::AsyncProtocol(const ProtocolConfig& config)
-    : config_(config), socket_(std::make_unique<UdpSocket>(MakeUDPConfig(config))), requestManager_(std::make_unique<RequestManager>()) {
+    : config_(config),
+      socket_(std::make_unique<UdpSocket>(MakeUDPConfig(config))),
+      requestManager_(std::make_unique<RequestManager>()) {
     if (config.enableLogging_) {
         DefaultLogger::GetInstance().SetLogFile(config.logFile_);
         DefaultLogger::GetInstance().SetLogLevel(config.logLevel_);

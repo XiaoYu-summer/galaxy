@@ -6,11 +6,12 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
-#include <string>
-#include "protocol.h"
-#include "udp_socket.h"
+
+#include "Protocol.h"
+#include "UdpSocket.h"
 
 namespace aoip {
 

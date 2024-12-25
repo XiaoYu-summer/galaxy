@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "logger.h"
-#include "memory_pool.h"
+#include "Logger.h"
+#include "MemoryPool.h"
 
 namespace aoip {
 

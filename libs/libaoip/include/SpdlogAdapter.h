@@ -1,9 +1,10 @@
 #pragma once
 
-#include <memory>
 #include <spdlog/spdlog.h>
 
-#include "logger.h"
+#include <memory>
+
+#include "Logger.h"
 
 namespace aoip {
 

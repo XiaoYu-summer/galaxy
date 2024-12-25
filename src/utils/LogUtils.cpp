@@ -1,7 +1,7 @@
 #include <boost/filesystem.hpp>
 #include <iostream>
 
-#include "libaoip/include/spdlog_adapter.h"
+#include "libaoip/include/SpdlogAdapter.h"
 #include "utils/FileUtils.h"
 #include "utils/LogUtils.h"
 
