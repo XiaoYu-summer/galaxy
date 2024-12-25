@@ -1,18 +1,20 @@
 #include "async_protocol.h"
 
-uint32_t RequestManager::addRequest(std::shared_ptr<Request> request) {
+namespace aoip {
+
+uint32_t RequestManager::AddRequest(std::shared_ptr<Request> request) {
     std::lock_guard<std::mutex> lock(mutex_);
-    uint32_t request_id = next_request_id_++;
-    requests_[request_id] = request;
-    return request_id;
+    uint32_t requestId = nextRequestId_++;
+    requests_[requestId] = request;
+    return requestId;
 }
 
-bool RequestManager::matchResponse(const Frame& response) {
+bool RequestManager::MatchResponse(const Frame& response) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     for (auto it = requests_.begin(); it != requests_.end(); ++it) {
-        if (it->second->frame.getFunctionCode() == response.getFunctionCode()) {
-            it->second->promise.set_value(response.getData());
+        if (it->second->frame_.GetFunctionCode() == response.GetFunctionCode()) {
+            it->second->promise_.set_value(response.GetData());
             requests_.erase(it);
             return true;
         }
@@ -20,16 +22,16 @@ bool RequestManager::matchResponse(const Frame& response) {
     return false;
 }
 
-void RequestManager::cleanTimeouts() {
+void RequestManager::CleanTimeouts() {
     std::lock_guard<std::mutex> lock(mutex_);
     auto now = std::chrono::steady_clock::now();
 
     for (auto it = requests_.begin(); it != requests_.end();) {
         auto& request = it->second;
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - request->timestamp).count();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - request->timestamp_).count();
 
-        if (elapsed > request->timeout_ms) {
-            request->promise.set_exception(std::make_exception_ptr(std::runtime_error("Request timeout")));
+        if (elapsed > request->timeoutMs_) {
+            request->promise_.set_exception(std::make_exception_ptr(std::runtime_error("Request timeout")));
             it = requests_.erase(it);
         } else {
             ++it;
@@ -38,76 +40,75 @@ void RequestManager::cleanTimeouts() {
 }
 
 AsyncProtocol::AsyncProtocol(const ProtocolConfig& config)
-    : config_(config), socket_(std::make_unique<UDPSocket>(makeUDPConfig(config))), running_(false) {
-    if (config.enable_logging) {
-        aoip::DefaultLogger::instance().setLogFile(config.log_file);
-        aoip::DefaultLogger::instance().setLogLevel(config.log_level);
+    : config_(config), socket_(std::make_unique<UdpSocket>(MakeUDPConfig(config))), requestManager_(std::make_unique<RequestManager>()) {
+    if (config.enableLogging_) {
+        DefaultLogger::GetInstance().SetLogFile(config.logFile_);
+        DefaultLogger::GetInstance().SetLogLevel(config.logLevel_);
     }
 }
 
-AsyncProtocol::~AsyncProtocol() { stop(); }
+AsyncProtocol::~AsyncProtocol() { Stop(); }
 
-void AsyncProtocol::start() {
+void AsyncProtocol::Start() {
     if (running_) return;
+
     running_ = true;
-    receiver_thread_ = std::thread(&AsyncProtocol::receiverLoop, this);
-    timeout_thread_ = std::thread(&AsyncProtocol::timeoutLoop, this);
-    AOIP_LOG_INFO("AsyncProtocol started");
+    receiverThread_ = std::thread(&AsyncProtocol::ReceiverLoop, this);
+    timeoutThread_ = std::thread(&AsyncProtocol::TimeoutLoop, this);
 }
 
-void AsyncProtocol::stop() {
+void AsyncProtocol::Stop() {
     if (!running_) return;
+
     running_ = false;
-
-    if (receiver_thread_.joinable()) {
-        receiver_thread_.join();
+    if (receiverThread_.joinable()) {
+        receiverThread_.join();
     }
-    if (timeout_thread_.joinable()) {
-        timeout_thread_.join();
+    if (timeoutThread_.joinable()) {
+        timeoutThread_.join();
     }
-
-    AOIP_LOG_INFO("AsyncProtocol stopped");
 }
 
-std::future<std::vector<uint32_t>> AsyncProtocol::sendRequest(uint16_t func_code, const std::vector<uint32_t>& data) {
-    auto request = std::make_shared<Request>(Frame(func_code, data), config_.timeout_ms);
+std::future<std::vector<uint32_t>> AsyncProtocol::SendRequest(uint16_t funcCode, const std::vector<uint32_t>& data) {
+    if (!running_) {
+        throw std::runtime_error("Protocol not started");
+    }
 
-    auto future = request->promise.get_future();
+    auto request = std::make_shared<Request>(Frame(funcCode, data), config_.timeoutMs_);
+    auto requestId = requestManager_->AddRequest(request);
 
-    request_manager_.addRequest(request);
-
-    auto frame_data = request->frame.serialize();
-    if (config_.broadcast) {
-        socket_->broadcast(frame_data, config_.slave_port);
+    auto frameData = request->frame_.Serialize();
+    if (config_.broadcast_) {
+        socket_->Broadcast(frameData, config_.slavePort_);
     } else {
-        socket_->sendTo(frame_data, "127.0.0.1", config_.slave_port);
+        socket_->SendTo(frameData, "127.0.0.1", config_.slavePort_);
     }
 
-    AOIP_LOG_DEBUG("Sent request: " + request->frame.toString());
+    AOIP_LOG_DEBUG("Sent request: " + request->frame_.ToString());
 
-    return future;
+    return request->promise_.get_future();
 }
 
-void AsyncProtocol::receiverLoop() {
+void AsyncProtocol::ReceiverLoop() {
     std::vector<uint8_t> buffer;
-    std::string from_ip;
-    uint16_t from_port;
+    std::string fromIp;
+    uint16_t fromPort;
 
     while (running_) {
         try {
-            if (!socket_->recvFrom(buffer, from_ip, from_port)) {
+            if (!socket_->RecvFrom(buffer, fromIp, fromPort)) {
                 continue;
             }
 
             Frame response;
-            if (!response.deserialize(buffer)) {
+            if (!response.Deserialize(buffer)) {
                 AOIP_LOG_ERROR("Failed to parse response");
                 continue;
             }
 
-            AOIP_LOG_DEBUG("Received response: " + response.toString());
+            AOIP_LOG_DEBUG("Received response: " + response.ToString());
 
-            if (!request_manager_.matchResponse(response)) {
+            if (!requestManager_->MatchResponse(response)) {
                 AOIP_LOG_WARN("Unmatched response received");
             }
 
@@ -117,10 +118,10 @@ void AsyncProtocol::receiverLoop() {
     }
 }
 
-void AsyncProtocol::timeoutLoop() {
+void AsyncProtocol::TimeoutLoop() {
     while (running_) {
         try {
-            request_manager_.cleanTimeouts();
+            requestManager_->CleanTimeouts();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         } catch (const std::exception& e) {
             AOIP_LOG_ERROR(std::string("Error in timeout loop: ") + e.what());
@@ -128,10 +129,12 @@ void AsyncProtocol::timeoutLoop() {
     }
 }
 
-UDPConfig AsyncProtocol::makeUDPConfig(const ProtocolConfig& config) {
-    UDPConfig udp_config;
-    udp_config.bind_port = config.master_port;
-    udp_config.broadcast = config.broadcast;
-    udp_config.timeout_ms = config.timeout_ms;
-    return udp_config;
+UdpConfig AsyncProtocol::MakeUDPConfig(const ProtocolConfig& config) {
+    UdpConfig udpConfig;
+    udpConfig.bindPort_ = config.masterPort_;
+    udpConfig.broadcast_ = config.broadcast_;
+    udpConfig.timeoutMs_ = config.timeoutMs_;
+    return udpConfig;
 }
+
+}  // namespace aoip

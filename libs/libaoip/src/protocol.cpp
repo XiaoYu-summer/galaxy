@@ -3,133 +3,128 @@
 
 #include "protocol.h"
 
-Frame::Frame(uint16_t func_code, const std::vector<uint32_t>& data) : function_code_(func_code), data_(data) {
-    checksum_ = calculateChecksum();
+Frame::Frame(uint16_t functionCode, const std::vector<uint32_t>& data)
+    : functionCode_(functionCode), data_(data), checksum_(0) {
+    checksum_ = CalculateChecksum();
 }
 
-std::vector<uint8_t> Frame::serialize() const {
-    // 使用内存池分配序列化缓冲区
-    auto buffer = MemoryPool<4096>::instance().getBuffer();
+std::vector<uint8_t> Frame::Serialize() const {
+    auto& pool = MemoryPool<4096>::GetInstance();
+    auto buffer = pool.GetBuffer();
     size_t pos = 0;
 
-    // 帧头
-    buffer.data()[pos++] = FRAME_HEADER & 0xFF;
-    buffer.data()[pos++] = (FRAME_HEADER >> 8) & 0xFF;
-    buffer.data()[pos++] = (FRAME_HEADER >> 16) & 0xFF;
-    buffer.data()[pos++] = (FRAME_HEADER >> 24) & 0xFF;
+    // Write frame header
+    auto* data = buffer.GetData();
+    data[pos++] = FrameHeader & 0xFF;
+    data[pos++] = (FrameHeader >> 8) & 0xFF;
+    data[pos++] = (FrameHeader >> 16) & 0xFF;
+    data[pos++] = (FrameHeader >> 24) & 0xFF;
 
-    // 产品ID
-    buffer.data()[pos++] = product_id_ & 0xFF;
-    buffer.data()[pos++] = (product_id_ >> 8) & 0xFF;
-    buffer.data()[pos++] = (product_id_ >> 16) & 0xFF;
-    buffer.data()[pos++] = (product_id_ >> 24) & 0xFF;
+    // Write product ID
+    data[pos++] = productId_ & 0xFF;
+    data[pos++] = (productId_ >> 8) & 0xFF;
+    data[pos++] = (productId_ >> 16) & 0xFF;
+    data[pos++] = (productId_ >> 24) & 0xFF;
 
-    // 设备ID
-    buffer.data()[pos++] = device_id_ & 0xFF;
-    buffer.data()[pos++] = (device_id_ >> 8) & 0xFF;
+    // Write device ID
+    data[pos++] = deviceId_ & 0xFF;
+    data[pos++] = (deviceId_ >> 8) & 0xFF;
 
-    // 功能码
-    buffer.data()[pos++] = function_code_ & 0xFF;
-    buffer.data()[pos++] = (function_code_ >> 8) & 0xFF;
+    // Write function code
+    data[pos++] = functionCode_ & 0xFF;
+    data[pos++] = (functionCode_ >> 8) & 0xFF;
 
-    // 数据长度
-    uint32_t data_len = data_.size();
-    buffer.data()[pos++] = data_len & 0xFF;
-    buffer.data()[pos++] = (data_len >> 8) & 0xFF;
-    buffer.data()[pos++] = (data_len >> 16) & 0xFF;
-    buffer.data()[pos++] = (data_len >> 24) & 0xFF;
+    // Write data length
+    uint32_t dataLen = data_.size() * sizeof(uint32_t);
+    data[pos++] = dataLen & 0xFF;
+    data[pos++] = (dataLen >> 8) & 0xFF;
+    data[pos++] = (dataLen >> 16) & 0xFF;
+    data[pos++] = (dataLen >> 24) & 0xFF;
 
-    // 数据
-    for (uint32_t d : data_) {
-        buffer.data()[pos++] = d & 0xFF;
-        buffer.data()[pos++] = (d >> 8) & 0xFF;
-        buffer.data()[pos++] = (d >> 16) & 0xFF;
-        buffer.data()[pos++] = (d >> 24) & 0xFF;
+    // Write data
+    for (uint32_t value : data_) {
+        data[pos++] = value & 0xFF;
+        data[pos++] = (value >> 8) & 0xFF;
+        data[pos++] = (value >> 16) & 0xFF;
+        data[pos++] = (value >> 24) & 0xFF;
     }
 
-    // 校验和
-    uint32_t checksum = calculateChecksum();
-    buffer.data()[pos++] = checksum & 0xFF;
-    buffer.data()[pos++] = (checksum >> 8) & 0xFF;
-    buffer.data()[pos++] = (checksum >> 16) & 0xFF;
-    buffer.data()[pos++] = (checksum >> 24) & 0xFF;
+    // Write checksum
+    data[pos++] = checksum_ & 0xFF;
+    data[pos++] = (checksum_ >> 8) & 0xFF;
+    data[pos++] = (checksum_ >> 16) & 0xFF;
+    data[pos++] = (checksum_ >> 24) & 0xFF;
 
-    return std::vector<uint8_t>(buffer.data(), buffer.data() + pos);
+    return std::vector<uint8_t>(data, data + pos);
 }
 
-bool Frame::deserialize(const std::vector<uint8_t>& data) {
-    if (data.size() < 20) return false;
-
-    // 使用内存池分配临时缓冲区
-    auto buffer = MemoryPool<4096>::instance().getBuffer();
-    std::memcpy(buffer.data(), data.data(), data.size());
+bool Frame::Deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() < 16) {  // Minimum frame size without data
+        return false;
+    }
 
     size_t pos = 0;
 
-    // 检查帧头
-    uint32_t header = (buffer.data()[pos + 3] << 24) | (buffer.data()[pos + 2] << 16) | (buffer.data()[pos + 1] << 8) |
-                      buffer.data()[pos];
-    if (header != FRAME_HEADER) return false;
+    // Read and verify frame header
+    uint32_t header = (data[pos + 3] << 24) | (data[pos + 2] << 16) | (data[pos + 1] << 8) | data[pos];
+    if (header != FrameHeader) {
+        return false;
+    }
     pos += 4;
 
-    // 解析产品ID
-    product_id_ = (buffer.data()[pos + 3] << 24) | (buffer.data()[pos + 2] << 16) | (buffer.data()[pos + 1] << 8) |
-                  buffer.data()[pos];
+    // Read product ID
+    productId_ = (data[pos + 3] << 24) | (data[pos + 2] << 16) | (data[pos + 1] << 8) | data[pos];
     pos += 4;
 
-    // 解析设备ID
-    device_id_ = (buffer.data()[pos + 1] << 8) | buffer.data()[pos];
+    // Read device ID
+    deviceId_ = (data[pos + 1] << 8) | data[pos];
     pos += 2;
 
-    // 解析功能码
-    function_code_ = (buffer.data()[pos + 1] << 8) | buffer.data()[pos];
+    // Read function code
+    functionCode_ = (data[pos + 1] << 8) | data[pos];
     pos += 2;
 
-    // 解析数据长度
-    uint32_t data_len = (buffer.data()[pos + 3] << 24) | (buffer.data()[pos + 2] << 16) |
-                        (buffer.data()[pos + 1] << 8) | buffer.data()[pos];
+    // Read data length
+    uint32_t dataLen = (data[pos + 3] << 24) | (data[pos + 2] << 16) | (data[pos + 1] << 8) | data[pos];
     pos += 4;
 
-    if (data.size() < pos + data_len * 4 + 4) return false;
+    if (dataLen % 4 != 0 || pos + dataLen + 4 > data.size()) {
+        return false;
+    }
 
-    // 解析数据
+    // Read data
     data_.clear();
-    for (uint32_t i = 0; i < data_len; i++) {
-        uint32_t d = (buffer.data()[pos + 3] << 24) | (buffer.data()[pos + 2] << 16) | (buffer.data()[pos + 1] << 8) |
-                     buffer.data()[pos];
-        data_.push_back(d);
-        pos += 4;
+    for (size_t i = 0; i < dataLen; i += 4) {
+        uint32_t value = (data[pos + i + 3] << 24) | (data[pos + i + 2] << 16) | (data[pos + i + 1] << 8) | data[pos + i];
+        data_.push_back(value);
     }
+    pos += dataLen;
 
-    // 解析校验和
-    checksum_ = (buffer.data()[pos + 3] << 24) | (buffer.data()[pos + 2] << 16) | (buffer.data()[pos + 1] << 8) |
-                buffer.data()[pos];
+    // Read checksum
+    checksum_ = (data[pos + 3] << 24) | (data[pos + 2] << 16) | (data[pos + 1] << 8) | data[pos];
 
-    return calculateChecksum() == checksum_;
+    return Validate();
 }
 
-uint32_t Frame::calculateChecksum() const {
-    // 1. 从数据长度开始
-    uint32_t sum = static_cast<uint32_t>(data_.size());
+uint32_t Frame::CalculateChecksum() const {
+    uint32_t sum = 0;
+    sum += FrameHeader;
+    sum += productId_;
+    sum += deviceId_;
+    sum += functionCode_;
 
-    // 2. 依次加上所有数据
     for (uint32_t d : data_) {
-        // 确保只取低32位
-        sum = (sum + d) & 0xFFFFFFFF;
+        sum += d;
     }
 
-    // 3. 取反加1
-    return (~sum + 1) & 0xFFFFFFFF;
+    return sum;
 }
 
-std::string Frame::toString() const {
+std::string Frame::ToString() const {
     std::stringstream ss;
-    ss << "Frame{func_code=0x" << std::hex << function_code_ << ", data_len=" << std::dec << data_.size()
-       << ", checksum=0x" << std::hex << checksum_ << "}";
+    ss << "Frame[func=" << std::hex << std::setw(4) << std::setfill('0') << functionCode_ << ", data=" << data_.size()
+       << " words]";
     return ss.str();
 }
 
-bool Frame::validate() const {
-    if (data_.size() > 1024) return false;
-    return calculateChecksum() == checksum_;
-}
+bool Frame::Validate() const { return checksum_ == CalculateChecksum(); }

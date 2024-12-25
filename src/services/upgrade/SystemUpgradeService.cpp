@@ -5,25 +5,27 @@
 #include "utils/FileUtils.h"
 
 namespace SystemUpgradeService {
-void Upgrade(const std::string& file, const std::string& file_name) {
+
+void UpgradeSystem(const std::string& filePath, const std::string& fileName) {
     try {
         /**
          * 校验文件格式
          */
-        if (!FileUtils::CheckFileFormat(file_name, ".img.tar.gz")) {
+        if (!FileUtils::CheckFileFormat(fileName, ".img.tar.gz")) {
             throw std::runtime_error("File format error");
         }
 #ifdef NDEBUG
-        FileUtils::ExtractTarGz(file, "/userdata");
+        FileUtils::ExtractTarGzFile(filePath, "/userdata");
         // 将解压的文件重命名
-        boost::filesystem::path source = "/userdata/" + file_name;
-        boost::filesystem::path destination = "/userdata/update.img";
-        boost::filesystem::rename(source, destination);
+        boost::filesystem::path sourcePath = "/userdata/" + fileName;
+        boost::filesystem::path destPath = "/userdata/update.img";
+        boost::filesystem::rename(sourcePath, destPath);
         // 重启应用
-        std::string restart =
+        std::string restartCmd =
             "updateEngine --image_url=/userdata/update.img --misc=update --savepath=/userdata/update.img --reboot &";
-        boost::process::child c(restart, boost::process::std_out > stdout, boost::process::std_err > stderr);
-        c.detach();  // 使子进程在后台运行
+        boost::process::child restartProcess(restartCmd, boost::process::std_out > stdout,
+                                             boost::process::std_err > stderr);
+        restartProcess.detach();  // 使子进程在后台运行
 #else
         std::cout << "Build type: Debug, System Not Upgrade" << std::endl;
 #endif
@@ -33,4 +35,5 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         throw e;
     }
 }
+
 }  // namespace SystemUpgradeService

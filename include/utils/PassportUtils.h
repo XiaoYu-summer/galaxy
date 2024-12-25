@@ -9,53 +9,57 @@ namespace PassportUtils {
 /**
  * @brief 获取账号密码文件路径
  */
-inline boost::filesystem::path GetAccountPasswordFile() {
-    boost::filesystem::path app_current_path = boost::filesystem::current_path();
+inline boost::filesystem::path GetAccountPasswordFilePath() {
+    boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
 #ifdef NDEBUG
-    boost::filesystem::path file = app_current_path.parent_path() / "passport" / "passport.json";
+    boost::filesystem::path filePath = appCurrentPath.parent_path() / "passport" / "passport.json";
 #else
-    boost::filesystem::path file = app_current_path / "passport" / "passport.json";
+    boost::filesystem::path filePath = appCurrentPath / "passport" / "passport.json";
 #endif
-    return file;
+    return filePath;
 }
 
 /**
  * @brief 写入账号密码到文件
  */
-inline void WriteAccountPassword(const std::string& account, const std::string& password,
-                                 const std::string& file = GetAccountPasswordFile().string()) {
-    boost::filesystem::path file_path(file);
-    boost::filesystem::path dir = file_path.parent_path();
-    if (!boost::filesystem::exists(dir)) {
-        if (!boost::filesystem::create_directories(dir)) {
-            CROW_LOG_ERROR << "Failed to create directories: " << dir;
+inline void WriteAccountPasswordToFile(const std::string& account, const std::string& password,
+                                       const std::string& filePath = GetAccountPasswordFilePath().string()) {
+    boost::filesystem::path filePathObj(filePath);
+    boost::filesystem::path dirPath = filePathObj.parent_path();
+    if (!boost::filesystem::exists(dirPath)) {
+        if (!boost::filesystem::create_directories(dirPath)) {
+            CROW_LOG_ERROR << "Failed to create directories: " << dirPath;
             return;
         }
     }
-    std::ofstream ofs(file);
-    if (!ofs) {
-        CROW_LOG_ERROR << "Write Account Password Failed to open file: " << file;
+    std::ofstream outFile(filePath);
+    if (!outFile) {
+        CROW_LOG_ERROR << "Failed to open file for writing: " << filePath;
         return;
     }
-    // 写入数据
-    ofs << R"({"account": ")" << account << R"(", "password": ")" << password << R"("})";
-    ofs.close();
+    outFile << R"({"account": ")" << account << R"(", "password": ")" << password << R"("})";
+    outFile.close();
 }
 
 /**
- * @brief 读取 GetAccountPasswordFile 所返回的JSON文件内容
- * 并返回 account 与 password
+ * @brief 读取账号密码文件内容并返回 account 与 password
  */
-inline std::tuple<std::string, std::string> ReadAccountPassword() {
-    std::string accountFile = GetAccountPasswordFile().string();
-    std::ifstream ifs(accountFile);
-    if (!ifs) {
-        throw std::runtime_error("Failed to open account password file");
+inline std::tuple<std::string, std::string> ReadAccountPasswordFromFile() {
+    std::string accountFilePath = GetAccountPasswordFilePath().string();
+    std::ifstream inFile(accountFilePath);
+    if (!inFile) {
+        CROW_LOG_ERROR << "Failed to open file for reading: " << accountFilePath;
+        return std::make_tuple("", "");
     }
-    // 读取文件内容到字符串
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
+    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    inFile.close();
+
     crow::json::rvalue accountPassword = crow::json::load(fileContent);
+    if (!accountPassword) {
+        CROW_LOG_ERROR << "Failed to parse JSON from file: " << accountFilePath;
+        return std::make_tuple("", "");
+    }
+
     return std::make_tuple(accountPassword["account"].s(), accountPassword["password"].s());
 }
 
@@ -63,11 +67,9 @@ inline std::tuple<std::string, std::string> ReadAccountPassword() {
  * @brief 初始化账号密码文件
  */
 inline void InitAccountPasswordFile() {
-    auto file = GetAccountPasswordFile();
-    // 判断 file 是否存在，不存在则执行写入操作
-    CROW_LOG_INFO << "Account password file: " << boost::filesystem::exists(file);
-    if (!boost::filesystem::exists(file)) {
-        WriteAccountPassword("admin", "21232f297a57a5a743894a0e4a801fc3", file.string());
+    std::string accountFilePath = GetAccountPasswordFilePath().string();
+    if (!boost::filesystem::exists(accountFilePath)) {
+        WriteAccountPasswordToFile("admin", "admin");
     }
 }
 

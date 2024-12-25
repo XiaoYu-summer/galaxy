@@ -1,24 +1,23 @@
 #pragma once
-#include <spdlog/spdlog.h>
 
 #include <memory>
+#include <spdlog/spdlog.h>
 
-#include "ilogger.h"
 #include "logger.h"
 
 namespace aoip {
 
-class SpdLogAdapter : public ILogger {
+class SpdLogAdapter : public Logger {
    public:
     explicit SpdLogAdapter(std::shared_ptr<spdlog::logger> logger) : logger_(logger) {}
 
-    void debug(const std::string& message) override { logger_->debug(message); }
+    void Debug(const std::string& message) override { logger_->debug(message); }
 
-    void info(const std::string& message) override { logger_->info(message); }
+    void Info(const std::string& message) override { logger_->info(message); }
 
-    void warn(const std::string& message) override { logger_->warn(message); }
+    void Warn(const std::string& message) override { logger_->warn(message); }
 
-    void error(const std::string& message) override { logger_->error(message); }
+    void Error(const std::string& message) override { logger_->error(message); }
 
    private:
     std::shared_ptr<spdlog::logger> logger_;

@@ -4,11 +4,11 @@
 #include <string>
 namespace FileUtils {
 
-std::string Save(const std::string& file, const std::string& path);
-std::string GetPairFileNameFull(const std::unordered_map<std::string, std::string>& map);
-bool CompareMD5(const std::string& file, const std::string& md5);
+std::string SaveFile(const std::string& fileContent, const std::string& filePath);
+std::string GetFullFileName(const std::unordered_map<std::string, std::string>& paramMap);
+bool VerifyMD5(const std::string& fileContent, const std::string& md5);
 
-bool CheckFileFormat(const std::string& filename, const std::string& format = ".tar.gz");
-// 解压.tar.gz文件
-void ExtractTarGz(const std::string& filename, const std::string& dest_dir);
+bool CheckFileFormat(const std::string& fileName, const std::string& format = ".tar.gz");
+void ExtractTarGzFile(const std::string& fileName, const std::string& destDir);
+
 }  // namespace FileUtils

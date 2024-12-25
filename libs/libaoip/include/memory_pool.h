@@ -3,35 +3,32 @@
 #include <mutex>
 #include <vector>
 
-template <size_t BlockSize>
+template <size_t blockSize>
 class MemoryPool {
    public:
-    // 智能指针包装,自动归还内存
     class Buffer {
        public:
-        Buffer(MemoryPool& pool) : pool_(pool), data_(static_cast<uint8_t*>(pool.allocate())) {}
+        Buffer(MemoryPool& pool) : pool_(pool), data_(static_cast<uint8_t*>(pool.Allocate())) {}
 
         ~Buffer() {
             if (data_) {
-                pool_.deallocate(data_);
+                pool_.Deallocate(data_);
             }
         }
 
-        uint8_t* data() { return data_; }
-        const uint8_t* data() const { return data_; }
-        constexpr size_t size() const { return BlockSize; }
+        uint8_t* GetData() { return data_; }
+        const uint8_t* GetData() const { return data_; }
+        constexpr size_t GetSize() const { return blockSize; }
 
-        // 禁止拷贝
         Buffer(const Buffer&) = delete;
         Buffer& operator=(const Buffer&) = delete;
 
-        // 允许移动
         Buffer(Buffer&& other) noexcept : pool_(other.pool_), data_(other.data_) { other.data_ = nullptr; }
 
         Buffer& operator=(Buffer&& other) noexcept {
             if (this != &other) {
                 if (data_) {
-                    pool_.deallocate(data_);
+                    pool_.Deallocate(data_);
                 }
                 pool_ = other.pool_;
                 data_ = other.data_;
@@ -45,43 +42,43 @@ class MemoryPool {
         uint8_t* data_;
     };
 
-    static MemoryPool& instance() {
+    static MemoryPool& GetInstance() {
         static MemoryPool pool;
         return pool;
     }
 
-    Buffer getBuffer() { return Buffer(*this); }
+    Buffer GetBuffer() { return Buffer(*this); }
 
    private:
     friend class Buffer;
 
-    MemoryPool() { expandPool(); }
+    MemoryPool() { ExpandPool(); }
 
-    void* allocate() {
+    void* Allocate() {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (free_blocks_.empty()) {
-            expandPool();
+        if (freeBlocks_.empty()) {
+            ExpandPool();
         }
-        void* block = free_blocks_.back();
-        free_blocks_.pop_back();
+        void* block = freeBlocks_.back();
+        freeBlocks_.pop_back();
         return block;
     }
 
-    void deallocate(void* ptr) {
+    void Deallocate(void* ptr) {
         std::lock_guard<std::mutex> lock(mutex_);
-        free_blocks_.push_back(ptr);
+        freeBlocks_.push_back(ptr);
     }
 
-    void expandPool() {
-        constexpr size_t expand_size = 1024;
-        auto new_block = std::make_unique<char[]>(BlockSize * expand_size);
-        for (size_t i = 0; i < expand_size; i++) {
-            free_blocks_.push_back(&new_block[i * BlockSize]);
+    void ExpandPool() {
+        constexpr size_t expandSize = 1024;
+        auto newBlock = std::make_unique<char[]>(blockSize * expandSize);
+        for (size_t i = 0; i < expandSize; i++) {
+            freeBlocks_.push_back(&newBlock[i * blockSize]);
         }
-        blocks_.push_back(std::move(new_block));
+        blocks_.push_back(std::move(newBlock));
     }
 
     std::mutex mutex_;
-    std::vector<void*> free_blocks_;
+    std::vector<void*> freeBlocks_;
     std::vector<std::unique_ptr<char[]>> blocks_;
 };

@@ -11,47 +11,41 @@
 
 using Session = crow::SessionMiddleware<crow::InMemoryStore>;
 
-static const std::unordered_set<std::string> skipPaths = {"/",       "/passport", "/version",
-                                                          "/assets", "/health",   "/postern"};
+static const std::unordered_set<std::string> SKIP_PATHS = {"/",       "/passport", "/version",
+                                                           "/assets", "/health",   "/postern"};
+
 struct PassportMiddleware {
     struct context {};
 
-    crow::App<crow::CookieParser, Session, ReqLoggerMiddleware, PassportMiddleware>& app;  // 引用 CrowApp 对象
+    crow::App<crow::CookieParser, Session, ReqLoggerMiddleware, PassportMiddleware>& app_;
 
-    void before_handle(crow::request& req, crow::response& res, context& ctx) {
-        // 校验授权
-        // 获取请求链接
-        std::string path = req.url;
-        std::cout << "path: " << path << std::endl;
-        // 如果是/passport开头相关的请求，不需要校验
+    void before_handle(crow::request& request, crow::response& response, context& context) {
+        std::string requestPath = request.url;
 
-        for (const auto& skipPath : skipPaths) {
-            if (path.compare(0, skipPath.size(), skipPath) == 0) {
+        for (const auto& skipPath : SKIP_PATHS) {
+            if (requestPath.compare(0, skipPath.size(), skipPath) == 0) {
                 return;
             }
         }
-        // 获取请求头中的token
-        std::string authToken = req.get_header_value("Authorization");
-        auto& session = app.get_context<Session>(req);
 
-        // this is automatically deduced to be a std::string
-        // (even with the parameter being a char[])
-        // one could also write: session.get<std::string>("user")
-        auto token = session.get(TOKEN_KEY, "");
-        auto expireTime = session.get(TOKEN_EXPIRE_KEY, 0);
-        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        // 如果token为空，返回错误信息
-        if (token.empty() || authToken.empty() || token != authToken) {
-            return FailResponse(res, ErrorCode::AUTH_ERROR, "Authorization failed");
+        std::string authToken = request.get_header_value("Authorization");
+        auto& session = app_.get_context<Session>(request);
+
+        auto sessionToken = session.get(TOKEN_KEY, "");
+        auto tokenExpireTime = session.get(TOKEN_EXPIRE_KEY, 0);
+        auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+        if (sessionToken.empty() || authToken.empty() || sessionToken != authToken) {
+            return FailResponse(response, ErrorCode::AUTH_ERROR, "Authorization failed");
         }
-        if (now > expireTime) {
-            FailResponse(res, ErrorCode::AUTH_EXPIRED, "Authorization expired");
+
+        if (currentTime > tokenExpireTime) {
+            FailResponse(response, ErrorCode::AUTH_EXPIRED, "Authorization expired");
         } else {
-            // 更新过期时间
-            auto expireTime = std::chrono::system_clock::now() + std::chrono::hours(1);
-            session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(expireTime));
+            auto newExpireTime = std::chrono::system_clock::now() + std::chrono::hours(1);
+            session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(newExpireTime));
         }
     }
 
-    void after_handle(crow::request& req, crow::response& res, context& ctx) {}
+    void after_handle(crow::request& request, crow::response& response, context& context) {}
 };

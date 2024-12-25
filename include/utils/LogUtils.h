@@ -12,5 +12,5 @@ class FileLogHandler : public crow::ILogHandler {
     void log(std::string message, crow::LogLevel level) override;
 
    private:
-    std::shared_ptr<spdlog::logger> m_logger;
+    std::shared_ptr<spdlog::logger> logger_;
 };

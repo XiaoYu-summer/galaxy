@@ -5,12 +5,13 @@ namespace aoip {
 
 enum class LogLevel { DEBUG, INFO, WARNING, ERROR };
 
-class ILogger {
+class Logger {
    public:
-    virtual ~ILogger() = default;
-    virtual void debug(const std::string& message) = 0;
-    virtual void info(const std::string& message) = 0;
-    virtual void warn(const std::string& message) = 0;
-    virtual void error(const std::string& message) = 0;
+    virtual ~Logger() = default;
+    virtual void Debug(const std::string& message) = 0;
+    virtual void Info(const std::string& message) = 0;
+    virtual void Warn(const std::string& message) = 0;
+    virtual void Error(const std::string& message) = 0;
 };
+
 }  // namespace aoip

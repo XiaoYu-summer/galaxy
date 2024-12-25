@@ -1,56 +1,74 @@
 #pragma once
+
+#include <atomic>
 #include <chrono>
 #include <future>
 #include <map>
+#include <memory>
 #include <mutex>
-
+#include <thread>
+#include <vector>
+#include <string>
 #include "protocol.h"
 #include "udp_socket.h"
 
-// 请求上下文
-struct Request {
-    Frame frame;
-    std::chrono::steady_clock::time_point timestamp;
-    uint32_t timeout_ms;
-    std::promise<std::vector<uint32_t>> promise;
+namespace aoip {
 
-    Request(Frame f, uint32_t timeout)
-        : frame(std::move(f)), timestamp(std::chrono::steady_clock::now()), timeout_ms(timeout) {}
+struct Request {
+    Frame frame_;
+    std::promise<std::vector<uint32_t>> promise_;
+    std::chrono::steady_clock::time_point timestamp_;
+    uint32_t timeoutMs_;
+
+    Request(const Frame& frame, uint32_t timeoutMs)
+        : frame_(frame), timestamp_(std::chrono::steady_clock::now()), timeoutMs_(timeoutMs) {}
 };
 
-// 请求管理器
 class RequestManager {
    public:
-    uint32_t addRequest(std::shared_ptr<Request> request);
-    bool matchResponse(const Frame& response);
-    void cleanTimeouts();
+    uint32_t AddRequest(std::shared_ptr<Request> request);
+    bool MatchResponse(const Frame& response);
+    void CleanTimeouts();
 
    private:
     std::mutex mutex_;
+    uint32_t nextRequestId_{0};
     std::map<uint32_t, std::shared_ptr<Request>> requests_;
-    uint32_t next_request_id_{0};
 };
 
-// 异步协议类
+struct ProtocolConfig {
+    uint32_t productId_{0};
+    uint32_t deviceId_{0};
+    uint16_t masterPort_{0};
+    uint16_t slavePort_{0};
+    bool broadcast_{false};
+    uint32_t timeoutMs_{1000};
+    uint32_t recvBufferSize_{4096};
+    bool enableLogging_{false};
+    std::string logFile_;
+    LogLevel logLevel_{LogLevel::INFO};
+};
+
 class AsyncProtocol {
    public:
     explicit AsyncProtocol(const ProtocolConfig& config);
     ~AsyncProtocol();
 
-    void start();
-    void stop();
-
-    std::future<std::vector<uint32_t>> sendRequest(uint16_t func_code, const std::vector<uint32_t>& data);
+    void Start();
+    void Stop();
+    std::future<std::vector<uint32_t>> SendRequest(uint16_t funcCode, const std::vector<uint32_t>& data);
 
    private:
-    void receiverLoop();
-    void timeoutLoop();
-    static UDPConfig makeUDPConfig(const ProtocolConfig& config);
+    static UdpConfig MakeUDPConfig(const ProtocolConfig& config);
+    void ReceiverLoop();
+    void TimeoutLoop();
 
     ProtocolConfig config_;
-    std::unique_ptr<UDPSocket> socket_;
-    std::atomic<bool> running_;
-    std::thread receiver_thread_;
-    std::thread timeout_thread_;
-    RequestManager request_manager_;
+    std::unique_ptr<UdpSocket> socket_;
+    std::unique_ptr<RequestManager> requestManager_;
+    std::atomic<bool> running_{false};
+    std::thread receiverThread_;
+    std::thread timeoutThread_;
 };
+
+}  // namespace aoip

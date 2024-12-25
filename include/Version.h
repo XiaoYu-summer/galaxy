@@ -3,7 +3,7 @@
 #include <string>
 
 namespace VersionInfo {
-const std::string version = "1.0.0";
-const std::string hash = "";
-const std::string count = "";
+const std::string VERSION = "1.0.0";
+const std::string GIT_HASH = "";
+const std::string COMMIT_COUNT = "";
 }  // namespace VersionInfo

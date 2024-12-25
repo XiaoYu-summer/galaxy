@@ -2,7 +2,8 @@
 #include <crow.h>
 
 #include <string>
+
 namespace ServiceUpgradeService {
-void Upgrade(const std::string& file, const std::string& file_name);
-void Rollback();
+void UpgradeService(const std::string& filePath, const std::string& fileName);
+void RollbackService();
 }  // namespace ServiceUpgradeService

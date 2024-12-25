@@ -6,48 +6,52 @@
 #include "logger.h"
 #include "memory_pool.h"
 
-struct UDPConfig {
-    std::string bind_ip{"0.0.0.0"};
-    uint16_t bind_port{0};
-    bool broadcast{false};
-    size_t send_buffer_size{65535};
-    size_t recv_buffer_size{65535};
-    int timeout_ms{1000};
+namespace aoip {
+
+struct UdpConfig {
+    std::string bindIp_{"0.0.0.0"};
+    uint16_t bindPort_{0};
+    bool broadcast_{false};
+    size_t sendBufferSize_{65535};
+    size_t recvBufferSize_{65535};
+    int timeoutMs_{1000};
 };
 
-class UDPSocket {
+class UdpSocket {
    public:
-    explicit UDPSocket(const UDPConfig& config);
-    ~UDPSocket();
+    explicit UdpSocket(const UdpConfig& config);
+    ~UdpSocket();
 
-    UDPSocket(const UDPSocket&) = delete;
-    UDPSocket& operator=(const UDPSocket&) = delete;
+    UdpSocket(const UdpSocket&) = delete;
+    UdpSocket& operator=(const UdpSocket&) = delete;
 
-    bool sendTo(const void* data, size_t len, const std::string& ip, uint16_t port);
+    bool SendTo(const void* data, size_t len, const std::string& ip, uint16_t port);
 
-    bool sendTo(const std::vector<uint8_t>& data, const std::string& ip, uint16_t port) {
-        return sendTo(data.data(), data.size(), ip, port);
+    bool SendTo(const std::vector<uint8_t>& data, const std::string& ip, uint16_t port) {
+        return SendTo(data.data(), data.size(), ip, port);
     }
 
-    bool broadcast(const void* data, size_t len, uint16_t port);
+    bool Broadcast(const void* data, size_t len, uint16_t port);
 
-    bool broadcast(const std::vector<uint8_t>& data, uint16_t port) {
-        return broadcast(data.data(), data.size(), port);
+    bool Broadcast(const std::vector<uint8_t>& data, uint16_t port) {
+        return Broadcast(data.data(), data.size(), port);
     }
 
-    bool recvFrom(void* buffer, size_t& len, std::string& from_ip, uint16_t& from_port, int timeout_ms = -1);
+    bool RecvFrom(void* buffer, size_t& len, std::string& fromIp, uint16_t& fromPort, int timeoutMs = -1);
 
-    bool recvFrom(std::vector<uint8_t>& data, std::string& from_ip, uint16_t& from_port, int timeout_ms = -1);
+    bool RecvFrom(std::vector<uint8_t>& data, std::string& fromIp, uint16_t& fromPort, int timeoutMs = -1);
 
-    std::string getLastError() const { return last_error_; }
-    bool getLocalAddress(std::string& ip, uint16_t& port) const;
+    std::string GetLastError() const { return lastError_; }
+    bool GetLocalAddress(std::string& ip, uint16_t& port) const;
 
    private:
-    bool init();
-    bool setSocketOptions();
-    void setError(const char* msg);
+    bool Init();
+    bool SetSocketOptions();
+    void SetError(const char* msg);
 
-    int sock_{-1};
-    UDPConfig config_;
-    std::string last_error_;
+    int socket_{-1};
+    UdpConfig config_;
+    std::string lastError_;
 };
+
+}  // namespace aoip

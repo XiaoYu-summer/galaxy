@@ -3,44 +3,46 @@
 
 #include "code/ErrorCode.h"
 
-inline void SuccessResponse(crow::response& res, const std::string& message = "Success",
+inline void SuccessResponse(crow::response& response, const std::string& message = "Success",
                             const crow::json::wvalue& data = crow::json::wvalue()) {
-    crow::json::wvalue response_body;
-    response_body["code"] = ErrorCode::SUCCESS;
-    response_body["message"] = message;
-    // 合并 response_body 与 data
+    crow::json::wvalue responseBody;
+    responseBody["code"] = static_cast<int>(ErrorCode::SUCCESS);
+    responseBody["message"] = message;
+
     if (!data.dump().empty()) {
-        crow::json::rvalue data_rvalue = crow::json::load(data.dump());
-        for (const auto& item : data_rvalue) {
-            response_body[item.key()] = item;
+        crow::json::rvalue dataValue = crow::json::load(data.dump());
+        for (const auto& item : dataValue) {
+            responseBody[item.key()] = item;
         }
     }
-    res.code = 200;
-    res.set_header("Content-Type", "application/json");
-    res.write(response_body.dump());
-    res.end();
+
+    response.code = 200;
+    response.set_header("Content-Type", "application/json");
+    response.write(responseBody.dump());
+    response.end();
 }
 
-inline void FailResponse(crow::response& res, ErrorCode code, const std::string& message,
+inline void FailResponse(crow::response& response, ErrorCode errorCode, const std::string& message,
                          const crow::json::wvalue& data = crow::json::wvalue()) {
-    crow::json::wvalue response_body;
-    response_body["code"] = code;
-    response_body["message"] = message;
+    crow::json::wvalue responseBody;
+    responseBody["code"] = static_cast<int>(errorCode);
+    responseBody["message"] = message;
 
     if (!data.dump().empty()) {
-        response_body["data"] = crow::json::load(data.dump());
+        responseBody["data"] = crow::json::load(data.dump());
     }
 
-    int http_status_code = 500;  // 默认状态码为500
-    int code_value = static_cast<int>(code);
-    if (code_value >= 100000 && code_value <= 500999) {
-        http_status_code = code_value / 1000;  // 取前三位作为HTTP状态码
+    int httpStatusCode = 500;  // Default to 500 Internal Server Error
+    int errorCodeValue = static_cast<int>(errorCode);
+    if (errorCodeValue >= 100000 && errorCodeValue <= 500999) {
+        httpStatusCode = errorCodeValue / 1000;  // Extract HTTP status code from error code
     }
-    if (http_status_code < 100 || http_status_code > 599) {
-        http_status_code = 400;
+    if (httpStatusCode < 100 || httpStatusCode > 599) {
+        httpStatusCode = 400;  // Default to 400 Bad Request if invalid
     }
-    res.code = http_status_code;
-    res.set_header("Content-Type", "application/json");
-    res.write(response_body.dump());
-    res.end();
+
+    response.code = httpStatusCode;
+    response.set_header("Content-Type", "application/json");
+    response.write(responseBody.dump());
+    response.end();
 }

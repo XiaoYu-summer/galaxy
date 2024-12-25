@@ -9,70 +9,81 @@
 #include "utils/FileUtils.h"
 #include "utils/ResUtils.h"
 
-bool ValidateUpgradeParams(crow::multipart::message& form_data) {
-    auto file = form_data.get_part_by_name("file");
-    auto type = form_data.get_part_by_name("type");
-    auto md5 = form_data.get_part_by_name("md5");
+bool ValidateUpgradeParameters(crow::multipart::message& formData) {
+    auto fileData = formData.get_part_by_name("file");
+    auto upgradeType = formData.get_part_by_name("type");
+    auto md5Hash = formData.get_part_by_name("md5");
+    auto contentDisposition = fileData.get_header_object("content-disposition");
 
-    auto shead = file.get_header_object("content-disposition");
+    const std::unordered_set<std::string> validTypes = {"view", "service", "firmware", "system"};
 
-    std::unordered_set<std::string> valid_types = {"view", "service", "firmware", "system"};
-
-    return shead.params.size() == 0 || type.body.empty() || md5.body.empty() ||
-           valid_types.find(type.body) == valid_types.end();
+    return contentDisposition.params.size() == 0 || upgradeType.body.empty() || md5Hash.body.empty() ||
+           validTypes.find(upgradeType.body) == validTypes.end();
 }
 
 void UpgradeController::InitRoutes(CrowApp& app) {
-    /**
-     * 生成CROW Route 对应的代码
-     * 路径 /resource/v1/update
-     * 方法 POST
-     * body 参数 form-data
-     *  - file 文件 file
-     *  - type 类型 "view" "service" "fireware"
-     *  - md5 文件md5 string
-     * 返回值 void
-     */
     CROW_ROUTE(app, "/resource/api/v1/update")
-        .methods("POST"_method)([&app](const crow::request& req, crow::response& res) {
-            // 判断multipart/form-data的请求体大小，如果超过100M则直接返回文件过大
-            auto content_length = req.get_header_value("Content-Length");
-            if (content_length.empty() || std::stoul(content_length) > 100 * 1024 * 1024) {
-                return FailResponse(res, ErrorCode::FILE_TOO_LARGE, "file too large");
+        .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
+            auto contentLength = request.get_header_value("Content-Length");
+            if (contentLength.empty() || std::stoul(contentLength) > 100 * 1024 * 1024) {
+                return FailResponse(response, ErrorCode::FILE_TOO_LARGE, "File too large");
             }
-            std::string file_name;
-            crow::multipart::message form_data(req);
-            if (ValidateUpgradeParams(form_data)) {
-                return FailResponse(res, ErrorCode::PARAMS_ERROR, "params error");
-            } else {
-                // 获取文件
-                auto file = form_data.get_part_by_name("file");
-                // 获取类型
-                auto type = form_data.get_part_by_name("type");
-                // 获取md5
-                auto md5 = form_data.get_part_by_name("md5");
-                auto shead = file.get_header_object("content-disposition");
-                bool isMD5Match = FileUtils::CompareMD5(file.body, md5.body);
-                if (isMD5Match) {
-                    file_name = FileUtils::GetPairFileNameFull(shead.params);
-                    boost::filesystem::path app_current_path = boost::filesystem::current_path();
-                    boost::filesystem::path save_file_path = app_current_path / "upgrades" / type.body / file_name;
-                    FileUtils::Save(file.body, save_file_path.string());
-                    try {
-                        if (type.body == "service") {
-                            ServiceUpgradeService::Upgrade(save_file_path.string(), file_name);
-                        } else if (type.body == "system") {
-                            SystemUpgradeService::Upgrade(save_file_path.string(), file_name);
-                        } else if (type.body == "view") {
-                        } else if (type.body == "firmware") {
-                        }
-                        return SuccessResponse(res);
-                    } catch (const std::exception& e) {
-                        return FailResponse(res, ErrorCode::UPGRADE_ERROR, e.what());
+
+            crow::multipart::message formData(request);
+            if (ValidateUpgradeParameters(formData)) {
+                return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid parameters");
+            }
+
+            auto fileData = formData.get_part_by_name("file");
+            auto upgradeType = formData.get_part_by_name("type");
+            auto md5Hash = formData.get_part_by_name("md5");
+            auto contentDisposition = fileData.get_header_object("content-disposition");
+
+            bool isMD5Match = FileUtils::VerifyMD5(fileData.body, md5Hash.body);
+            if (isMD5Match) {
+                std::string fileName = FileUtils::GetFullFileName(contentDisposition.params);
+                boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
+                boost::filesystem::path saveFilePath = appCurrentPath / "upgrades" / upgradeType.body / fileName;
+                FileUtils::SaveFile(fileData.body, saveFilePath.string());
+
+                try {
+                    if (upgradeType.body == "service") {
+                        ServiceUpgradeService::UpgradeService(saveFilePath.string(), fileName);
+                    } else if (upgradeType.body == "system") {
+                        SystemUpgradeService::UpgradeSystem(saveFilePath.string(), fileName);
+                    } else if (upgradeType.body == "firmware") {
+                        // FirmwareUpgradeService::UpgradeFirmware(saveFilePath.string());
                     }
-                } else {
-                    return FailResponse(res, ErrorCode::MD5_MISMATCH, "md5 mismatch");
+                    return SuccessResponse(response, "Upgrade initiated successfully");
+                } catch (const std::exception& error) {
+                    return FailResponse(response, ErrorCode::UPGRADE_ERROR, error.what());
                 }
+            } else {
+                return FailResponse(response, ErrorCode::MD5_MISMATCH, "MD5 verification failed");
+            }
+        });
+
+    CROW_ROUTE(app, "/resource/api/v1/rollback")
+        .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
+            auto requestBody = crow::json::load(request.body);
+            if (!requestBody) {
+                return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid request body");
+            }
+
+            std::string upgradeType = requestBody["type"].s();
+            try {
+                // if (upgradeType == "service") {
+                //     ServiceUpgradeService::RollbackService();
+                // } else if (upgradeType == "system") {
+                //     SystemUpgradeService::RollbackSystem();
+                // } else if (upgradeType == "firmware") {
+                //     FirmwareUpgradeService::RollbackFirmware();
+                // } else {
+                //     return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid upgrade type");
+                // }
+                return SuccessResponse(response, "Rollback initiated successfully");
+            } catch (const std::exception& error) {
+                return FailResponse(response, ErrorCode::UPGRADE_ERROR, error.what());
             }
         });
 }

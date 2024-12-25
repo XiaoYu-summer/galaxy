@@ -5,24 +5,26 @@
 #include "utils/FileUtils.h"
 
 namespace ServiceUpgradeService {
-void Upgrade(const std::string& file, const std::string& file_name) {
+
+void UpgradeService(const std::string& filePath, const std::string& fileName) {
     try {
         /**
          * 校验文件格式
          * 后缀为 .tar.gz
          * 再解压到临时目录 判断文件是否包含 galaxy文件 和 galaxy_xxx_xxx_xxx目录
          */
-        if (!FileUtils::CheckFileFormat(file_name)) {
+        if (!FileUtils::CheckFileFormat(fileName)) {
             throw std::runtime_error("File format error");
         }
 // 如果是调试就不实际解压文件
 #ifdef NDEBUG
-        boost::filesystem::path app_current_path = boost::filesystem::current_path();
-        FileUtils::ExtractTarGz(file, app_current_path.parent_path().string());
-        // 重启应用
-        std::string restart = "sleep 3 && /etc/init.d/S99galaxy restart";
-        boost::process::child c(restart, boost::process::std_out > stdout, boost::process::std_err > stderr);
-        c.detach();  // 使子进程在后台运行
+        boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
+        FileUtils::ExtractTarGzFile(filePath, appCurrentPath.parent_path().string());
+
+        std::string restartCmd = "sleep 3 && /etc/init.d/S99galaxy restart";
+        boost::process::child restartProcess(restartCmd, boost::process::std_out > stdout,
+                                             boost::process::std_err > stderr);
+        restartProcess.detach();  // 使子进程在后台运行
 #else
         std::cout << "Build type: Debug, Not Extract File" << std::endl;
 #endif
@@ -32,4 +34,5 @@ void Upgrade(const std::string& file, const std::string& file_name) {
         throw e;
     }
 }
+
 }  // namespace ServiceUpgradeService

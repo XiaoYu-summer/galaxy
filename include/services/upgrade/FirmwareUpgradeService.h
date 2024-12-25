@@ -2,6 +2,6 @@
 #include <string>
 
 namespace FirmwareUpgradeService {
-void Upgrade(const std::string& file);
-void Rollback();
+void UpgradeFirmware(const std::string& filePath);
+void RollbackFirmware();
 }  // namespace FirmwareUpgradeService

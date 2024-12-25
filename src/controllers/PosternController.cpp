@@ -5,20 +5,20 @@
 
 void PosternController::InitRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/postern/api/service/restart")
-        .methods("POST"_method)([&](const crow::request& req, crow::response& res) {
-            auto body = crow::json::load(req.body);
-            if (!body || !body.has("pwd") || body["pwd"].s() != "CVTEMH") {
-                return FailResponse(res, ErrorCode::PARAMS_ERROR, "params error");
+        .methods("POST"_method)([&](const crow::request& request, crow::response& response) {
+            auto requestBody = crow::json::load(request.body);
+            if (!requestBody || !requestBody.has("pwd") || requestBody["pwd"].s() != "CVTEMH") {
+                return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid parameters");
             }
 
 #ifdef NDEBUG
-            // 重启应用
-            std::string restart = "sleep 0.01 && /etc/init.d/S99galaxy restart";
-            boost::process::child c(restart, boost::process::std_out > stdout, boost::process::std_err > stderr);
-            c.detach();
+            std::string restartCommand = "sleep 0.01 && /etc/init.d/S99galaxy restart";
+            boost::process::child restartProcess(restartCommand, boost::process::std_out > stdout,
+                                                 boost::process::std_err > stderr);
+            restartProcess.detach();
 #else
             std::cout << "Build type: Debug, System Not Restart" << std::endl;
 #endif
-            return SuccessResponse(res, "Restarting...");
+            return SuccessResponse(response, "Service restarting...");
         });
 }

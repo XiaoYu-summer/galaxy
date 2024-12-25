@@ -2,6 +2,6 @@
 
 #include <string>
 namespace SystemUpgradeService {
-void Upgrade(const std::string& file, const std::string& file_name);
-void Rollback();
+void UpgradeSystem(const std::string& filePath, const std::string& fileName);
+void RollbackSystem();
 }  // namespace SystemUpgradeService

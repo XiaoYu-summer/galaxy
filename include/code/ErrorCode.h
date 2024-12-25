@@ -4,7 +4,7 @@
  * @brief 错误码
  * 所有错误码均为6位数字，前三位为HTTP状态码，后三位为业务错误码
  */
-enum ErrorCode {
+enum class ErrorCode {
     SUCCESS = 200000,
     PARAMS_ERROR = 400100,
     UNKNOWN_ERROR = 400101,
@@ -14,5 +14,5 @@ enum ErrorCode {
     AUTH_ERROR = 401100,
     AUTH_EXPIRED = 401101,
     PASSWORD_ERROR = 400102,
-    OLD_PASSWORD_ERROR = 400103,
+    OLD_PASSWORD_ERROR = 400103
 };
