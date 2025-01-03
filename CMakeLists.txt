@@ -30,6 +30,8 @@ include(${CONAN_TOOLCHAIN_PATH})
 # 定义资源目录
 set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(ASSETS_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}/assets")
+set(CONFIG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/config")
+set(CONFIG_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}/config")
 
 # 创建自定义命令来复制资源
 add_custom_command(
@@ -41,8 +43,19 @@ add_custom_command(
     COMMENT "Copying assets directory"
 )
 
+# 创建自定义命令来复制配置文件
+add_custom_command(
+    OUTPUT ${CONFIG_DESTINATION_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CONFIG_SOURCE_DIR}
+    ${CONFIG_DESTINATION_DIR}
+    DEPENDS ${CONFIG_SOURCE_DIR}
+    COMMENT "Copying config directory"
+)
+
 # 创建自定义目标
 add_custom_target(copy_assets ALL DEPENDS ${ASSETS_DESTINATION_DIR})
+add_custom_target(copy_config ALL DEPENDS ${CONFIG_DESTINATION_DIR})
 
 # 匹配 src 和 include 目录中的所有源文件和头文件
 file(GLOB_RECURSE SOURCES "src/*.cpp")
@@ -61,6 +74,7 @@ add_subdirectory(libs/libaoip)
 add_executable(galaxy main.cpp ${SOURCES} ${HEADERS})
 
 add_dependencies(galaxy copy_assets)
+add_dependencies(galaxy copy_config)
 
 # 链接 libaoip 库
 target_link_libraries(galaxy PRIVATE jr_aoip)
