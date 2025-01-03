@@ -90,12 +90,20 @@ struct PassportMiddleware {
         }
 
         // 普通用户模式：使用token验证
-        std::string token = request.get_header_value("X-Token");
-        if (token.empty()) {
-            return FailResponse(response, ErrorCode::AUTH_ERROR, "Missing token");
+        std::string authToken = request.get_header_value("Authorization");
+        auto& session = app_.get_context<Session>(request);
+        auto sessionToken = session.get(TOKEN_KEY, "");
+        auto tokenExpireTime = session.get(TOKEN_EXPIRE_KEY, 0);
+        auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        if (sessionToken.empty() || authToken.empty() || sessionToken != authToken) {
+            return FailResponse(response, ErrorCode::AUTH_ERROR, "Authorization failed");
         }
-
-        // TODO: 验证token的逻辑
+        if (currentTime > tokenExpireTime) {
+            FailResponse(response, ErrorCode::AUTH_EXPIRED, "Authorization expired");
+        } else {
+            auto newExpireTime = std::chrono::system_clock::now() + std::chrono::hours(1);
+            session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(newExpireTime));
+        }
     }
 
     void after_handle(crow::request& request, crow::response& response, context& context) {}
