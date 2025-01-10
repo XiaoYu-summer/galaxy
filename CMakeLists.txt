@@ -69,6 +69,7 @@ include_directories(
 
 # 添加子目录
 add_subdirectory(libs/libaoip)
+add_subdirectory(libs/mdns)
 
 # 添加可执行文件
 add_executable(galaxy main.cpp ${SOURCES} ${HEADERS})
@@ -76,28 +77,33 @@ add_executable(galaxy main.cpp ${SOURCES} ${HEADERS})
 add_dependencies(galaxy copy_assets)
 add_dependencies(galaxy copy_config)
 
-# 链接 libaoip 库
-target_link_libraries(galaxy PRIVATE jr_aoip)
-
+# 首先找到所有需要的包
+find_package(Boost REQUIRED thread system filesystem)
 find_package(Crow REQUIRED)
-
-# 链接 Crow 库和其他依赖
-target_link_libraries(galaxy PUBLIC Crow::Crow)
-
 find_package(OpenSSL REQUIRED)
-target_link_libraries(galaxy PUBLIC openssl::openssl)
-
 find_package(nlohmann_json REQUIRED)
-target_link_libraries(galaxy PUBLIC nlohmann_json::nlohmann_json)
-
 find_package(spdlog REQUIRED)
-target_link_libraries(galaxy PUBLIC spdlog::spdlog)
-
-find_package(Boost REQUIRED)
-target_link_libraries(galaxy PUBLIC boost::boost)
-
 find_package(LibArchive REQUIRED)
-target_link_libraries(galaxy PUBLIC LibArchive::LibArchive)
+
+# 链接所有依赖库
+target_link_libraries(galaxy 
+    PRIVATE 
+        Boost::thread
+        Boost::system
+        Boost::filesystem
+        Crow::Crow
+        OpenSSL::SSL 
+        OpenSSL::Crypto
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
+        LibArchive::LibArchive
+        $<BUILD_INTERFACE:jr_aoip>
+        $<BUILD_INTERFACE:mh_mdns>
+)
+
+if(APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-dead_strip")
+endif()
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
