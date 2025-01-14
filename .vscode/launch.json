@@ -17,6 +17,31 @@
       ],
       "externalConsole": true,
       "MIMode": "lldb"
+    },
+    {
+      "name": "gdb debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "build-debug",    
+      "program": "${workspaceFolder}/build/Debug/galaxy",    
+      "args": [],
+      "stopAtEntry": false,                                                       
+      "cwd": "${workspaceFolder}/build/Debug/",
+      "environment": [
+        {
+          "name": "ENABLE_FAKE_TOKEN", /*ENABLE_FAKE_TOKEN用于启用伪造的Token机制，在开发环境下使用*/ 
+          "value": "1"
+        }
+      ],
+      "externalConsole": false,                                                   
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+            "description": "为 gdb 启用整齐打印",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+        }
+      ]
     }
   ]
 }
