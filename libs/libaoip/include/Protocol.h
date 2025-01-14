@@ -9,6 +9,7 @@
 #include "MemoryPool.h"
 
 struct ProtocolConfig {
+    std::string masterIp_{"0.0.0.0"};
     uint16_t slavePort_{50000};
     uint16_t masterPort_{60000};
     uint32_t timeoutMs_{1000};

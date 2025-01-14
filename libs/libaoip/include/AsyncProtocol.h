@@ -13,51 +13,50 @@
 #include "Protocol.h"
 #include "UdpSocket.h"
 
-namespace aoip {
+namespace aoip
+{
 
-struct Request {
-    Frame frame_;
-    std::promise<std::vector<uint32_t>> promise_;
+struct Request
+{
+    std::string functionCode_;
+    std::promise<std::vector<uint8_t>> promise_;
     std::chrono::steady_clock::time_point timestamp_;
     uint32_t timeoutMs_;
 
-    Request(const Frame& frame, uint32_t timeoutMs)
-        : frame_(frame), timestamp_(std::chrono::steady_clock::now()), timeoutMs_(timeoutMs) {}
+    Request(const std::string& functionCode, uint32_t timeoutMs)
+        : functionCode_(functionCode), timestamp_(std::chrono::steady_clock::now()), timeoutMs_(timeoutMs) {}
 };
 
-class RequestManager {
+class UdpCallback
+{
+public:
+    virtual std::string GetFunctionCode(const std::vector<uint8_t>& response) const = 0;
+};
+
+class RequestManager
+{
    public:
     uint32_t AddRequest(std::shared_ptr<Request> request);
-    bool MatchResponse(const Frame& response);
+    bool MatchResponse(const std::vector<uint8_t>& response);
     void CleanTimeouts();
-
+    void SetUdpCallback(std::shared_ptr<UdpCallback> cb);
    private:
     std::mutex mutex_;
     uint32_t nextRequestId_{0};
     std::map<uint32_t, std::shared_ptr<Request>> requests_;
+    std::weak_ptr<UdpCallback> udpCallback_;
 };
 
-struct ProtocolConfig {
-    uint32_t productId_{0};
-    uint32_t deviceId_{0};
-    uint16_t masterPort_{0};
-    uint16_t slavePort_{0};
-    bool broadcast_{false};
-    uint32_t timeoutMs_{1000};
-    uint32_t recvBufferSize_{4096};
-    bool enableLogging_{false};
-    std::string logFile_;
-    LogLevel logLevel_{LogLevel::INFO};
-};
-
-class AsyncProtocol {
+class AsyncProtocol
+{
    public:
     explicit AsyncProtocol(const ProtocolConfig& config);
     ~AsyncProtocol();
 
     void Start();
     void Stop();
-    std::future<std::vector<uint32_t>> SendRequest(uint16_t funcCode, const std::vector<uint32_t>& data);
+    std::future<std::vector<uint8_t>> SendRequest(const std::string& funcCode, const void* data, size_t len);
+    void SetUdpCallback(std::shared_ptr<UdpCallback> cb);
 
    private:
     static UdpConfig MakeUDPConfig(const ProtocolConfig& config);

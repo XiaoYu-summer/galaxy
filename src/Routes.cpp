@@ -3,6 +3,7 @@
 #include "controllers/PosternController.h"
 #include "controllers/SystemController.h"
 #include "controllers/UpgradeController.h"
+#include "controllers/DeviceManager.h"
 
 void SetupRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/")
@@ -15,4 +16,5 @@ void SetupRoutes(CrowApp& app) {
     UpgradeController::InitRoutes(app);
     PosternController::InitRoutes(app);
     PassportController::InitRoutes(app);
+    DeviceManager::GetInstance().InitRoutes(app);
 };

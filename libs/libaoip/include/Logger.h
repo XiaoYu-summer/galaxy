@@ -9,6 +9,8 @@
 #include <string>
 
 #include "ILogger.h"
+#include "code/ErrorCode.h"
+
 
 namespace aoip {
 
@@ -102,7 +104,30 @@ class LogManager {
 
 }  // namespace aoip
 
-#define AOIP_LOG_DEBUG(message) aoip::LogManager::GetInstance().GetLogger().Debug(message)
-#define AOIP_LOG_INFO(message) aoip::LogManager::GetInstance().GetLogger().Info(message)
-#define AOIP_LOG_WARN(message) aoip::LogManager::GetInstance().GetLogger().Warn(message)
-#define AOIP_LOG_ERROR(message) aoip::LogManager::GetInstance().GetLogger().Error(message)
+#define AOIP_LOG_DEBUG(message) \
+	{ \
+		std::ostringstream oss; \
+		oss << message << ", this=" << this << ", function=" << __FUNC__ << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+		aoip::LogManager::GetInstance().GetLogger().Debug(oss.str()); \
+	}
+
+#define AOIP_LOG_INFO(message)  \
+	{ \
+		std::ostringstream oss; \
+		oss << message << ", this=" << this << ", function=" << __FUNC__ << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+		aoip::LogManager::GetInstance().GetLogger().Info(oss.str()); \
+	}
+
+#define AOIP_LOG_WARN(message)  \
+	{ \
+		std::ostringstream oss; \
+		oss << message << ", this=" << this << ", function=" << __FUNC__ << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+		aoip::LogManager::GetInstance().GetLogger().Warn(oss.str()); \
+	}
+
+#define AOIP_LOG_ERROR(message)  \
+	{ \
+		std::ostringstream oss; \
+		oss << message << ", this=" << this << ", function=" << __FUNC__ << " (" << __FILE__ << ":" << __LINE__ << ")"; \
+		aoip::LogManager::GetInstance().GetLogger().Error(oss.str()); \
+	}
