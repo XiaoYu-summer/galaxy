@@ -37,6 +37,21 @@
             "cppStandard": "c++14",
             "intelliSenseMode": "macos-clang-arm64",
             "configurationProvider": "ms-vscode.cmake-tools"
+        },
+        {
+            "name": "Linux-Debug",
+            "includePath": [
+                "${workspaceFolder}/include",
+                "/root/.conan2/p/b/poco2d839710cad61/p/include/**",
+                "/root/.conan2/p/crowc9fea44d7b7fb7/p/include/**",
+                "/root/.conan2/p/boost90d47720aee1a/p/include/**",
+                "/root/.conan2/p/nlohm0567ffc90cfc1/p/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4
