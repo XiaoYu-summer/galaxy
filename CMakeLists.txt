@@ -84,6 +84,7 @@ find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(LibArchive REQUIRED)
+find_package(Poco REQUIRED COMPONENTS Foundation Util)
 
 # 链接所有依赖库
 target_link_libraries(galaxy 
@@ -99,6 +100,7 @@ target_link_libraries(galaxy
         LibArchive::LibArchive
         $<BUILD_INTERFACE:jr_aoip>
         $<BUILD_INTERFACE:mh_mdns>
+        Poco::Foundation
 )
 
 if(APPLE)

@@ -5,6 +5,7 @@ nlohmann_json/3.11.3
 spdlog/1.14.1
 boost/1.86.0
 libarchive/3.7.6
+poco/1.13.3
 
 [generators]
 CMakeDeps
@@ -12,3 +13,14 @@ CMakeToolchain
 
 [layout]
 cmake_layout
+
+[options]
+poco/1.13.3:enable_data_mysql=False
+poco/1.13.3:enable_zip=False
+poco/1.13.3:enable_data_postgresql=False
+poco/1.13.3:enable_data_sqlite=False
+poco/1.13.3:enable_pdf=False
+poco/1.13.3:enable_pagecompiler_file2page=False
+poco/1.13.3:enable_pocodoc=False
+poco/1.13.3:enable_sevenzip=False
+poco/1.13.3:enable_activerecord_compiler=False
