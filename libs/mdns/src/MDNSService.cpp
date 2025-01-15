@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <boost/chrono.hpp>
 #include <boost/thread.hpp>
 #include <condition_variable>
 #include <cstring>
@@ -32,7 +33,7 @@ struct mdns_service_t {
 };
 
 // 辅助函数：将TXT记录转换为字符串
-std::string txtToString(const std::vector<std::pair<std::string, std::string>>& txt) {
+std::string TxtToString(const std::vector<std::pair<std::string, std::string>>& txt) {
     std::stringstream ss;
     for (const auto& pair : txt) {
         if (!ss.str().empty()) {
@@ -44,7 +45,7 @@ std::string txtToString(const std::vector<std::pair<std::string, std::string>>& 
 }
 
 // 辅助函数：解析TXT记录字符串
-std::vector<std::pair<std::string, std::string>> parseTxt(const std::string& txt) {
+std::vector<std::pair<std::string, std::string>> ParseTxt(const std::string& txt) {
     std::vector<std::pair<std::string, std::string>> result;
     std::stringstream ss(txt);
     std::string item;
@@ -59,7 +60,7 @@ std::vector<std::pair<std::string, std::string>> parseTxt(const std::string& txt
 }
 
 // 辅助函数：将 sockaddr 转换为字符串
-int mdns_string_from_sockaddr(const struct sockaddr* addr, size_t addrlen, char* buffer, size_t capacity) {
+int MdnsStringFromSockaddr(const struct sockaddr* addr, size_t addrlen, char* buffer, size_t capacity) {
     if (addr->sa_family == AF_INET) {
         struct sockaddr_in* saddr = (struct sockaddr_in*)addr;
         char host[NI_MAXHOST] = {0};
@@ -91,7 +92,7 @@ struct ThreadData {
     size_t buffer_size;
 };
 
-void* service_thread_func(void* arg) {
+void* ServiceThreadFunc(void* arg) {
     auto* data = static_cast<ThreadData*>(arg);
     while (*data->running) {
         mdns_socket_listen(data->socket, data->buffer, data->buffer_size, data->callback, data->user_data);
@@ -101,7 +102,7 @@ void* service_thread_func(void* arg) {
     return nullptr;
 }
 
-void* browse_thread_func(void* arg) {
+void* BrowseThreadFunc(void* arg) {
     auto* data = static_cast<ThreadData*>(arg);
     while (*data->running) {
         mdns_socket_listen(data->socket, data->buffer, data->buffer_size, data->callback, data->user_data);
@@ -114,20 +115,20 @@ void* browse_thread_func(void* arg) {
 
 class MDNSServiceImpl {
    public:
-    MDNSServiceImpl() : running_(false), service_socket_(-1), service_thread_(), browse_thread_() {
+    MDNSServiceImpl() : running_(false), serviceSocket_(-1), serviceThread_(), browseThread_() {
         memset(buffer_, 0, sizeof(buffer_));
         memset(&service_, 0, sizeof(service_));
     }
 
     ~MDNSServiceImpl() {
-        stopBrowse();
-        stopPublish();
+        StopBrowse();
+        StopPublish();
     }
 
-    bool publish(const std::string& name, const std::string& type, uint16_t port,
+    bool Publish(const std::string& name, const std::string& type, uint16_t port,
                  const std::vector<std::pair<std::string, std::string>>& txt, const std::string& domain) {
         if (running_) {
-            stopPublish();
+            StopPublish();
         }
 
         // 确保服务类型格式正确
@@ -148,85 +149,87 @@ class MDNSServiceImpl {
         addr.sin_port = htons(MDNS_PORT);
         addr.sin_addr.s_addr = INADDR_ANY;
 
-        service_socket_ = mdns_socket_open_ipv4(&addr);
-        if (service_socket_ < 0) {
+        serviceSocket_ = mdns_socket_open_ipv4(&addr);
+        if (serviceSocket_ < 0) {
             return false;
         }
 
-        mdns_string_t service_string = mdns_string_t{service_type.c_str(), service_type.length()};
-        mdns_string_t hostname_string = mdns_string_t{name.c_str(), name.length()};
+        // 设置服务记录
+        mdns_record_t record_ptr = {0};
+        mdns_record_t record_srv = {0};
+        mdns_record_t record_txt = {0};
 
-        // 构建服务实例字符串 "<hostname>.<_service-name>._tcp.local."
-        std::string service_instance = name + "." + service_type;
-        mdns_string_t service_instance_string = mdns_string_t{service_instance.c_str(), service_instance.length()};
+        std::string full_service_name = name + "." + service_type;
+        std::string full_hostname = name + ".local";
 
-        // 构建 "<hostname>.local." 字符串
-        std::string hostname_qualified = name + ".local.";
-        mdns_string_t hostname_qualified_string =
-            mdns_string_t{hostname_qualified.c_str(), hostname_qualified.length()};
+        record_ptr.name = mdns_string_t{service_type.c_str(), service_type.length()};
+        record_ptr.type = MDNS_RECORDTYPE_PTR;
+        record_ptr.data.ptr.name = mdns_string_t{full_service_name.c_str(), full_service_name.length()};
+        record_ptr.rclass = MDNS_CLASS_IN;
+        record_ptr.ttl = 3600;
 
-        memset(&service_, 0, sizeof(service_));
-        service_.service = service_string;
-        service_.hostname = hostname_string;
-        service_.service_instance = service_instance_string;
-        service_.hostname_qualified = hostname_qualified_string;
-        service_.port = port;
-
-        // 设置 PTR 记录
-        mdns_record_t record_ptr = {.name = service_.service,
-                                    .type = MDNS_RECORDTYPE_PTR,
-                                    .data = {.ptr = {.name = service_.service_instance}},
-                                    .rclass = MDNS_CLASS_IN,
-                                    .ttl = 3600};
-
-        // 设置 SRV 记录
-        mdns_record_t record_srv = {
-            .name = service_.service_instance,
-            .type = MDNS_RECORDTYPE_SRV,
-            .data = {.srv = {.name = service_.hostname_qualified, .port = service_.port, .priority = 0, .weight = 0}},
-            .rclass = MDNS_CLASS_IN,
-            .ttl = 3600};
+        record_srv.name = mdns_string_t{full_service_name.c_str(), full_service_name.length()};
+        record_srv.type = MDNS_RECORDTYPE_SRV;
+        record_srv.data.srv.name = mdns_string_t{full_hostname.c_str(), full_hostname.length()};
+        record_srv.data.srv.port = port;
+        record_srv.data.srv.priority = 0;
+        record_srv.data.srv.weight = 0;
+        record_srv.rclass = MDNS_CLASS_IN | MDNS_CACHE_FLUSH;
+        record_srv.ttl = 120;
 
         // 设置 TXT 记录
-        mdns_record_t record_txt = {
-            .name = service_.service_instance, .type = MDNS_RECORDTYPE_TXT, .rclass = MDNS_CLASS_IN, .ttl = 3600};
-
-        std::string txt_str = txtToString(txt);
-        if (!txt_str.empty()) {
-            record_txt.data.txt.key = mdns_string_t{txt_str.c_str(), txt_str.length()};
-        }
+        std::string txt_str = TxtToString(txt);
+        record_txt.name = mdns_string_t{full_service_name.c_str(), full_service_name.length()};
+        record_txt.type = MDNS_RECORDTYPE_TXT;
+        record_txt.data.txt.key = mdns_string_t{txt_str.c_str(), txt_str.length()};
+        record_txt.rclass = MDNS_CLASS_IN | MDNS_CACHE_FLUSH;
+        record_txt.ttl = 4500;
 
         // 发布服务
-        uint8_t announce_buffer[1024];
+        uint8_t buffer[1024];
         mdns_record_t additional[2] = {record_srv, record_txt};
-        int res = mdns_announce_multicast(service_socket_, announce_buffer, sizeof(announce_buffer), record_ptr,
-                                          nullptr, 0, additional, 2);
-        if (res < 0) {
-            mdns_socket_close(service_socket_);
+        int result =
+            mdns_announce_multicast(serviceSocket_, buffer, sizeof(buffer), record_ptr, nullptr, 0, additional, 2);
+        if (result < 0) {
+            mdns_socket_close(serviceSocket_);
             return false;
         }
 
         running_ = true;
 
-        // 启动服务线程以处理传入的查询
-        ThreadData* thread_data =
-            new ThreadData{&running_, service_socket_, service_callback, &service_, buffer_, sizeof(buffer_)};
-
+        // 创建一个线程来处理mDNS服务
         try {
-            service_thread_ = boost::thread(service_thread_func, thread_data);
+            serviceThread_ = boost::thread([this]() {
+                uint8_t buffer[2048];
+                while (running_) {
+                    int nfds = serviceSocket_ + 1;
+                    fd_set readfs;
+                    FD_ZERO(&readfs);
+                    FD_SET(serviceSocket_, &readfs);
+
+                    struct timeval timeout;
+                    timeout.tv_sec = 0;
+                    timeout.tv_usec = 100000;
+
+                    if (select(nfds, &readfs, 0, 0, &timeout) >= 0) {
+                        if (FD_ISSET(serviceSocket_, &readfs)) {
+                            mdns_socket_listen(serviceSocket_, buffer, sizeof(buffer), ServiceCallback, &service_);
+                        }
+                    }
+                }
+            });
         } catch (const boost::thread_resource_error&) {
-            delete thread_data;
             running_ = false;
-            mdns_socket_close(service_socket_);
+            mdns_socket_close(serviceSocket_);
             return false;
         }
 
         return true;
     }
 
-    bool browse(const std::string& type, std::function<void(const ServiceInfo&)> callback, const std::string& domain) {
+    bool Browse(const std::string& type, std::function<void(const ServiceInfo&)> callback, const std::string& domain) {
         if (running_) {
-            stopBrowse();
+            StopBrowse();
         }
 
         callback_ = std::move(callback);
@@ -237,18 +240,18 @@ class MDNSServiceImpl {
         addr.sin_port = htons(MDNS_PORT);
         addr.sin_addr.s_addr = INADDR_ANY;
 
-        service_socket_ = mdns_socket_open_ipv4(&addr);
-        if (service_socket_ < 0) {
+        serviceSocket_ = mdns_socket_open_ipv4(&addr);
+        if (serviceSocket_ < 0) {
             return false;
         }
 
         running_ = true;
 
         ThreadData* thread_data =
-            new ThreadData{&running_, service_socket_, query_callback, this, buffer_, sizeof(buffer_)};
+            new ThreadData{&running_, serviceSocket_, QueryCallback, this, buffer_, sizeof(buffer_)};
 
         try {
-            browse_thread_ = boost::thread(browse_thread_func, thread_data);
+            browseThread_ = boost::thread(BrowseThreadFunc, thread_data);
         } catch (const boost::thread_resource_error&) {
             delete thread_data;
             running_ = false;
@@ -258,33 +261,33 @@ class MDNSServiceImpl {
         return true;
     }
 
-    void stopBrowse() {
+    void StopBrowse() {
         if (!running_) return;
         running_ = false;
-        if (browse_thread_.joinable()) {
-            browse_thread_.join();
+        if (browseThread_.joinable()) {
+            browseThread_.join();
         }
     }
 
-    void stopPublish() {
+    void StopPublish() {
         if (!running_) return;
         running_ = false;
-        if (service_thread_.joinable()) {
-            service_thread_.join();
+        if (serviceThread_.joinable()) {
+            serviceThread_.join();
         }
-        if (service_socket_ >= 0) {
-            mdns_socket_close(service_socket_);
-            service_socket_ = -1;
+        if (serviceSocket_ >= 0) {
+            mdns_socket_close(serviceSocket_);
+            serviceSocket_ = -1;
         }
     }
 
-    bool isRunning() const { return running_; }
+    bool IsRunning() const { return running_; }
 
    private:
-    static int query_callback(int sock, const struct sockaddr* from, size_t addrlen, mdns_entry_type_t entry,
-                              uint16_t query_id, uint16_t rtype, uint16_t rclass, uint32_t ttl, const void* data,
-                              size_t size, size_t name_offset, size_t name_length, size_t record_offset,
-                              size_t record_length, void* user_data) {
+    static int QueryCallback(int sock, const struct sockaddr* from, size_t addrlen, mdns_entry_type_t entry,
+                             uint16_t query_id, uint16_t rtype, uint16_t rclass, uint32_t ttl, const void* data,
+                             size_t size, size_t name_offset, size_t name_length, size_t record_offset,
+                             size_t record_length, void* user_data) {
         auto* self = static_cast<MDNSServiceImpl*>(user_data);
         if (!self || !self->callback_) return 0;
 
@@ -305,15 +308,15 @@ class MDNSServiceImpl {
         } else if (rtype == MDNS_RECORDTYPE_A) {
             struct sockaddr_in addr;
             mdns_record_parse_a(data, size, record_offset, record_length, &addr);
-            if (mdns_string_from_sockaddr(reinterpret_cast<const struct sockaddr*>(&addr), sizeof(struct sockaddr_in),
-                                          addrbuffer, sizeof(addrbuffer)) > 0) {
+            if (MdnsStringFromSockaddr(reinterpret_cast<const struct sockaddr*>(&addr), sizeof(struct sockaddr_in),
+                                       addrbuffer, sizeof(addrbuffer)) > 0) {
                 info.ip = std::string(addrbuffer);
             }
         } else if (rtype == MDNS_RECORDTYPE_AAAA) {
             struct sockaddr_in6 addr;
             mdns_record_parse_aaaa(data, size, record_offset, record_length, &addr);
-            if (mdns_string_from_sockaddr(reinterpret_cast<const struct sockaddr*>(&addr), sizeof(struct sockaddr_in6),
-                                          addrbuffer, sizeof(addrbuffer)) > 0) {
+            if (MdnsStringFromSockaddr(reinterpret_cast<const struct sockaddr*>(&addr), sizeof(struct sockaddr_in6),
+                                       addrbuffer, sizeof(addrbuffer)) > 0) {
                 info.ip = std::string(addrbuffer);
             }
         } else if (rtype == MDNS_RECORDTYPE_TXT) {
@@ -332,6 +335,14 @@ class MDNSServiceImpl {
         return 0;
     }
 
+    static int ServiceCallback(int sock, const struct sockaddr* from, size_t addrlen, mdns_entry_type_t entry,
+                               uint16_t query_id, uint16_t rtype, uint16_t rclass, uint32_t ttl, const void* data,
+                               size_t size, size_t name_offset, size_t name_length, size_t record_offset,
+                               size_t record_length, void* user_data) {
+        // 处理传入的查询，如果需要，可以在这里回答查询
+        return 0;
+    }
+
     static int service_callback(int sock, const struct sockaddr* from, size_t addrlen, mdns_entry_type_t entry,
                                 uint16_t query_id, uint16_t rtype, uint16_t rclass, uint32_t ttl, const void* data,
                                 size_t size, size_t name_offset, size_t name_length, size_t record_offset,
@@ -341,9 +352,9 @@ class MDNSServiceImpl {
     }
 
     std::atomic<bool> running_;
-    int service_socket_;
-    boost::thread service_thread_;
-    boost::thread browse_thread_;
+    int serviceSocket_;
+    boost::thread serviceThread_;
+    boost::thread browseThread_;
     mdns_service_t service_;
     uint8_t buffer_[2048];
     std::function<void(const ServiceInfo&)> callback_;
@@ -352,20 +363,20 @@ class MDNSServiceImpl {
 MDNSService::MDNSService() : impl_(new MDNSServiceImpl()) {}
 MDNSService::~MDNSService() = default;
 
-bool MDNSService::publish(const std::string& name, const std::string& type, uint16_t port,
+bool MDNSService::Publish(const std::string& name, const std::string& type, uint16_t port,
                           const std::vector<std::pair<std::string, std::string>>& txt, const std::string& domain) {
-    return impl_->publish(name, type, port, txt, domain);
+    return impl_->Publish(name, type, port, txt, domain);
 }
 
-bool MDNSService::browse(const std::string& type, std::function<void(const ServiceInfo&)> callback,
+bool MDNSService::Browse(const std::string& type, std::function<void(const ServiceInfo&)> callback,
                          const std::string& domain) {
-    return impl_->browse(type, std::move(callback), domain);
+    return impl_->Browse(type, std::move(callback), domain);
 }
 
-void MDNSService::stopBrowse() { impl_->stopBrowse(); }
+void MDNSService::StopBrowse() { impl_->StopBrowse(); }
 
-void MDNSService::stopPublish() { impl_->stopPublish(); }
+void MDNSService::StopPublish() { impl_->StopPublish(); }
 
-bool MDNSService::isRunning() const { return impl_->isRunning(); }
+bool MDNSService::IsRunning() const { return impl_->IsRunning(); }
 
 }  // namespace mdns

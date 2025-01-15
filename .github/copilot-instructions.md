@@ -1,4 +1,88 @@
+Please Use Chinese Answer Me! Thinks~
+
 # Modern C++ HTTP Server Development Guidelines
+
+## Chinese Language Requirements
+- Code comments must be in Chinese
+- Documentation must be in Chinese
+
+## POCO Library Usage Guidelines
+
+### Priority Principle
+- When functionality overlaps, prefer POCO library over standard library
+- Only consider standard library when POCO doesn't support the feature or has significant performance issues
+
+### POCO Library Priority Scenarios
+1. Network Programming
+   - Use Poco::Net instead of standard socket libraries
+   - Use Poco::Net::HTTPClientSession for HTTP requests
+   - Use Poco::Net::ServerSocket for server creation
+
+2. File Operations
+   - Use Poco::File instead of standard file operations
+   - Use Poco::FileStream instead of std::fstream
+   - Use Poco::TemporaryFile for temporary file handling
+
+3. String Processing
+   - Use Poco::String instead of std::string operations
+   - Use Poco::Format for string formatting
+
+4. Date and Time
+   - Use Poco::DateTime instead of std::chrono
+   - Use Poco::Timestamp for timestamp handling
+
+5. Multithreading
+   - Use Poco::Thread instead of std::thread
+   - Use Poco::Mutex instead of std::mutex
+   - Use Poco::Event for thread synchronization
+
+6. Configuration Files
+   - Use Poco::Util::PropertyFileConfiguration for configuration handling
+   - Use Poco::Util::JSONConfiguration for JSON configuration
+
+7. Data Formatting
+   - Use Poco::JSON for JSON data handling
+   - Use Poco::XML for XML data handling
+
+### Code Example Standards
+```cpp
+// Recommended POCO Usage
+class DataProcessor {
+private:
+    Poco::Logger& logger_;
+    Poco::Net::HTTPClientSession session_;
+    Poco::JSON::Object::Ptr config_;
+
+public:
+    DataProcessor() : 
+        logger_(Poco::Logger::get("DataProcessor")) 
+    {
+        logger_.information("数据处理器初始化");
+    }
+
+    void ProcessData() {
+        try {
+            // Using POCO file operations
+            Poco::File dataFile("data.json");
+            if (dataFile.exists()) {
+                // Using POCO JSON parsing
+                Poco::FileInputStream fis(dataFile.path());
+                Poco::JSON::Parser parser;
+                config_ = parser.parse(fis).extract<Poco::JSON::Object::Ptr>();
+            }
+        }
+        catch (Poco::Exception& ex) {
+            logger_.error("数据处理失败：%s", ex.displayText());
+        }
+    }
+};
+```
+
+### Error Handling Standards
+- Use POCO's exception system for error handling
+- Error messages must be in Chinese
+- Maintain reasonable exception granularity
+- Ensure exception messages are readable and understandable
 
 ## Code Style Guidelines
 
