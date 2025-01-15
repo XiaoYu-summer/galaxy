@@ -9,7 +9,7 @@ inline void SuccessResponse(crow::response& response, const std::string& message
     responseBody["code"] = static_cast<int>(ErrorCode::SUCCESS);
     responseBody["message"] = message;
 
-    if (!data.dump().empty()) {
+    if (data.t() != crow::json::type::Null) {
         crow::json::rvalue dataValue = crow::json::load(data.dump());
         for (const auto& item : dataValue) {
             responseBody[item.key()] = item;
