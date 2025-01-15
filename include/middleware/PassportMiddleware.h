@@ -95,6 +95,14 @@ struct PassportMiddleware {
             }
         }
 
+        const char* ENABLE_FAKE_TOKEN = std::getenv("ENABLE_FAKE_TOKEN");
+        if (ENABLE_FAKE_TOKEN &&
+            (strcasecmp(ENABLE_FAKE_TOKEN,"true") == 0 ||
+             strcasecmp(ENABLE_FAKE_TOKEN,"1") == 0))
+        {
+            return;  // 开发环境下不验证token
+        }
+
         // 普通用户模式：使用token验证
         std::string authToken = request.get_header_value("Authorization");
         auto& session = app_.get_context<Session>(request);
