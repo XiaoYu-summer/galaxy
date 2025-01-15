@@ -1,15 +1,16 @@
 #pragma execution_character_set("utf-8")
 #define CROW_STATIC_DIRECTORY "assets/"
 #define CROW_STATIC_ENDPOINT "/assets/<path>"
-#include "Poco/AutoPtr.h"
-#include "Poco/Logger.h"
 #include <Poco/Path.h>
+
+#include "Poco/AutoPtr.h"
+#include "Poco/Environment.h"
 #include "Poco/File.h"
 #include "Poco/FileChannel.h"
-#include "Poco/PatternFormatter.h"
 #include "Poco/FormattingChannel.h"
+#include "Poco/Logger.h"
+#include "Poco/PatternFormatter.h"
 #include "Poco/SplitterChannel.h"
-#include "Poco/Environment.h"
 #include "Poco/Util/Application.h"
 #ifdef _WIN32
 #include "Poco/WindowsConsoleChannel.h"
@@ -17,21 +18,22 @@
 #include "Poco/ConsoleChannel.h"
 #endif
 #include "Poco/AsyncChannel.h"
-
 #include "Routes.h"
+#include "apiControllers/DevicesApiController.h"
+#include "common/LoggerWrapper.h"
 #include "config/AppConfig.h"
+#include "controllers/DevicesController.h"
 #include "mdns/MDNSService.h"
 #include "middleware/PassportMiddleware.h"
 #include "types/App.h"
 #include "utils/LogUtils.h"
 #include "utils/PassportUtils.h"
-#include "apiControllers/DevicesApiController.h"
-#include "common/LoggerWrapper.h"
 
 void InitLogger()
 {
     // logging formats
-    Poco::AutoPtr<Poco::PatternFormatter> patternFormatter(new Poco::PatternFormatter("[%Y-%m-%d %H:%M:%S:%i tid=%I %q %s] %t (%U:%u)"));
+    Poco::AutoPtr<Poco::PatternFormatter> patternFormatter(
+        new Poco::PatternFormatter("[%Y-%m-%d %H:%M:%S:%i tid=%I %q %s] %t (%U:%u)"));
 
     // splitter channel
     Poco::AutoPtr<Poco::SplitterChannel> splitterChannel(new Poco::SplitterChannel());
@@ -48,7 +50,7 @@ void InitLogger()
     {
         Poco::File(pocoLogFilePath.parent()).createDirectories();
     }
-    catch (Poco::Exception &)
+    catch (Poco::Exception&)
     {
         poco_error(Poco::Util::Application::instance().logger(), "Create logs directory failed");
         return;
@@ -93,7 +95,8 @@ void InitLogger()
     Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(fileChannel));
 #endif
 
-    Poco::AutoPtr<Poco::FormattingChannel> formattingChannel(new Poco::FormattingChannel(patternFormatter, asyncChannel));
+    Poco::AutoPtr<Poco::FormattingChannel> formattingChannel(
+        new Poco::FormattingChannel(patternFormatter, asyncChannel));
 
     std::vector<std::string> logNames;
     Poco::Logger::root().names(logNames);
@@ -144,10 +147,9 @@ int main()
     // 发布服务信息
     LOG_I("Publishing mDNS service...");
     mdns::MDNSService mdnsPublisher;
-    std::vector<std::pair<std::string, std::string>> txt =
-    {
-        {"version", "1.0"}, {"type", "galaxy-server"}, {"api", "wzw rest"}
-    };
+    std::vector<std::pair<std::string, std::string>> txt;
+    txt.emplace_back("version", "1.0");
+    txt.emplace_back("author", "example");
 
     try
     {
@@ -164,6 +166,7 @@ int main()
     {
         LOG_E("Exception while publishing mDNS service: " << e.what());
     }
+
     // 启动服务器
     LOG_I("Starting Crow server...");
     try
