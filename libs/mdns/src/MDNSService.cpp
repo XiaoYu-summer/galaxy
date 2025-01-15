@@ -233,10 +233,10 @@ class MDNSServiceImpl
 
         running_ = true;
 
-        // 创建一个线程来处理mDNS服务
+        // 使用共享指针, 确保 Runnable 在线程结束前不会被释放
+        serviceRunnable_ = std::make_shared<ServiceThread>(running_, serviceSocket_, ServiceCallback, &service_);
         serviceThread_ = std::make_unique<Poco::Thread>();
-        auto runnable = std::make_unique<ServiceThread>(running_, serviceSocket_, ServiceCallback, &service_);
-        serviceThread_->start(*runnable);
+        serviceThread_->start(*serviceRunnable_);
 
         return true;
     }
@@ -264,9 +264,10 @@ class MDNSServiceImpl
 
         running_ = true;
 
+        // 同样对 Browse 线程做相同处理
+        browseRunnable_ = std::make_shared<ServiceThread>(running_, serviceSocket_, QueryCallback, this);
         browseThread_ = std::make_unique<Poco::Thread>();
-        auto runnable = std::make_unique<ServiceThread>(running_, serviceSocket_, QueryCallback, this);
-        browseThread_->start(*runnable);
+        browseThread_->start(*browseRunnable_);
 
         return true;
     }
@@ -385,6 +386,8 @@ class MDNSServiceImpl
 
     std::atomic<bool> running_;
     int serviceSocket_;
+    std::shared_ptr<ServiceThread> serviceRunnable_;
+    std::shared_ptr<ServiceThread> browseRunnable_;
     std::unique_ptr<Poco::Thread> serviceThread_;
     std::unique_ptr<Poco::Thread> browseThread_;
     mdns_service_t service_;
