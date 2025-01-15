@@ -1,38 +1,37 @@
 #pragma once
 #include <algorithm>
-#include "common/Packet.h"
-#include "code/StringUtils.h"
 
+#include "code/StringUtils.h"
+#include "common/Packet.h"
 
 // 协议头
 #define PROTOCOL_HEADER 0x5A1AA1A5
 
-
 // 功能号
 enum class FunctionCode : uint16_t
 {
-    PL_FUN_NETINFO_GET = 0x00C0,         // 获取MCU网络信息
-    PL_FUN_NETINFO_SET = 0x00C1,         // 设置MCU网络信息
-    PL_FUN_DEVICE_MARK = 0x0064,         // 设备寻址
-    PL_FUN_DEVICE_NAME_GET = 0x020B,     // 设备名称获取
+    PL_FUN_NETINFO_GET = 0x00C0,      // 获取MCU网络信息
+    PL_FUN_NETINFO_SET = 0x00C1,      // 设置MCU网络信息
+    PL_FUN_DEVICE_MARK = 0x0064,      // 设备寻址
+    PL_FUN_DEVICE_NAME_GET = 0x020B,  // 设备名称获取
 };
 
 const std::map<std::string, FunctionCode> FUNCTION_CODE_MAP = {
-    std::pair<std::string, FunctionCode>("get netInfo",                FunctionCode::PL_FUN_NETINFO_GET),
-    std::pair<std::string, FunctionCode>("set netInfo",                FunctionCode::PL_FUN_NETINFO_SET),
-    std::pair<std::string, FunctionCode>("device mark",                FunctionCode::PL_FUN_DEVICE_MARK),
-    std::pair<std::string, FunctionCode>("get device name",            FunctionCode::PL_FUN_DEVICE_NAME_GET),
+    std::pair<std::string, FunctionCode>("get netInfo", FunctionCode::PL_FUN_NETINFO_GET),
+    std::pair<std::string, FunctionCode>("set netInfo", FunctionCode::PL_FUN_NETINFO_SET),
+    std::pair<std::string, FunctionCode>("device mark", FunctionCode::PL_FUN_DEVICE_MARK),
+    std::pair<std::string, FunctionCode>("get device name", FunctionCode::PL_FUN_DEVICE_NAME_GET),
 };
-	
+
 inline std::string GetFunctionCodeStr(const uint16_t code)
 {
     std::string codeStr = "unknowCode";
     auto it = std::find_if(FUNCTION_CODE_MAP.begin(), FUNCTION_CODE_MAP.end(),
-        [&code](const std::pair<const std::string, FunctionCode>& pair) {
-        return FunctionCode(code) == pair.second;
-    });
+                           [&code](const std::pair<const std::string, FunctionCode>& pair)
+                           { return FunctionCode(code) == pair.second; });
 
-    if (it != FUNCTION_CODE_MAP.end()) {
+    if (it != FUNCTION_CODE_MAP.end())
+    {
         codeStr = it->first;
     }
     return codeStr;
@@ -61,12 +60,12 @@ struct McuNetInfo
 // 计算校验和
 uint32_t CalculateChecksum(uint32_t dataLen, const uint32_t* data)
 {
-    auto sum = dataLen; 
-    for (auto i = 0; i < dataLen; i++) 
-    { 
+    auto sum = dataLen;
+    for (auto i = 0; i < dataLen; i++)
+    {
         sum += data[i];
-    } 
-    sum = ~ sum + 1;
+    }
+    sum = ~sum + 1;
     return sum;
 }
 
@@ -82,7 +81,7 @@ void VerifyChecksum(uint32_t currentChecksum, uint32_t checksum)
 // 公共部分，消息头
 class CommonMessage
 {
-public:
+   public:
     CommonMessage() = default;
     virtual ~CommonMessage() = default;
     virtual bool Serialize(Binary::Pack& pack)
@@ -110,7 +109,7 @@ public:
             // 消息体
             DeserializeBody(unpack);
         }
-        catch(const std::exception& e)
+        catch (const std::exception& e)
         {
             AOIP_LOG_ERROR("pack deserialize error! " << e.what());
             return false;
@@ -122,16 +121,16 @@ public:
 
     virtual void SerializeHeader(Binary::Pack& pack)
     {
-        pack << messageHeader_.frameHeader_ << messageHeader_.productID_
-             << messageHeader_.deviceID_ << messageHeader_.functionCode_;
+        pack << messageHeader_.frameHeader_ << messageHeader_.productID_ << messageHeader_.deviceID_
+             << messageHeader_.functionCode_;
         headerSize_ = pack.size();
     }
 
     virtual void DeserializeHeader(const Binary::Unpack& unpack)
     {
         const auto totalSize = unpack.size();
-        unpack >> messageHeader_.frameHeader_ >> messageHeader_.productID_
-             >> messageHeader_.deviceID_ >> messageHeader_.functionCode_;
+        unpack >> messageHeader_.frameHeader_ >> messageHeader_.productID_ >> messageHeader_.deviceID_ >>
+            messageHeader_.functionCode_;
         headerSize_ = totalSize - unpack.size();
     }
 
@@ -148,7 +147,7 @@ class McuNetInfoGetRequestMsg : public CommonMessage
 // 获取MCU网络信息响应消息
 class McuNetInfoGetResponseMsg : public CommonMessage
 {
-public:
+   public:
     virtual void DeserializeBody(const Binary::Unpack& unpack) override
     {
         uint32_t checksum = 0;
@@ -170,12 +169,12 @@ public:
 // 配置MCU网络信息请求消息
 class McuNetInfoSetRequestMsg : public CommonMessage
 {
-public:
+   public:
     virtual void SerializeBody(Binary::Pack& pack) override
     {
         // 消息体大小
         const auto dataLen = sizeof(netInfo_) / sizeof(uint32_t);
-        pack << dataLen;
+        pack << static_cast<uint32_t>(dataLen);
         const auto bodySize = pack.size();
         // 消息体
         WriteArray(pack, netInfo_.mac_, sizeof(netInfo_.mac_));
@@ -186,7 +185,7 @@ public:
         // 计算校验和
         pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
     }
-    
+
     McuNetInfo netInfo_;
 };
 
@@ -198,7 +197,7 @@ class DeviceNameGetRequestMsg : public CommonMessage
 // 设备名称获取请求消息
 class DeviceNameGetResponseMsg : public CommonMessage
 {
-public:
+   public:
     virtual void DeserializeBody(const Binary::Unpack& unpack) override
     {
         uint32_t checksum = 0;
@@ -213,4 +212,3 @@ public:
     }
     std::string name_;
 };
-
