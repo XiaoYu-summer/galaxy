@@ -5,6 +5,9 @@ project(libmdns VERSION 1.0.0 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 查找 POCO 库
+find_package(Poco REQUIRED Foundation)
+
 # 收集源文件和头文件
 file(GLOB_RECURSE MDNS_PUB_HEADERS  "include/*.h" "*.h")
 file(GLOB_RECURSE MDNS_SOURCES "src/*.cpp" "src/*.c" "*.c")
@@ -30,15 +33,10 @@ target_include_directories(mh_mdns
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# 添加 pthread 依赖
-find_package(Threads REQUIRED)
-find_package(Boost REQUIRED thread system)
-
+# 链接 POCO 库
 target_link_libraries(mh_mdns 
     PRIVATE 
-        Threads::Threads 
-        $<BUILD_INTERFACE:Boost::thread>
-        $<BUILD_INTERFACE:Boost::system>
+        Poco::Foundation
 )
 
 # 导出目标
