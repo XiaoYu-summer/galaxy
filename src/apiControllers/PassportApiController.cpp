@@ -16,6 +16,10 @@ void PassportApiController::InitRoutes(CrowApp& app) {
                 return FailResponse(response, ErrorCode::PASSWORD_ERROR, "Invalid request body");
             }
 
+            if (!requestBody.has("account") || !requestBody.has("password")) {
+                return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid parameters");
+            }
+
             std::string accountName = requestBody["account"].s();
             std::string password = requestBody["password"].s();
             std::string accountFilePath = PassportUtils::GetAccountPasswordFilePath().string();
@@ -43,7 +47,7 @@ void PassportApiController::InitRoutes(CrowApp& app) {
             session.set(TOKEN_EXPIRE_KEY, std::chrono::system_clock::to_time_t(expireTime));
 
             crow::json::wvalue responseData({{"accessToken", token}});
-            return SuccessResponse(response, "Success", responseData);
+            return SuccessResponse(response, "Gain token success", responseData);
         });
 
     CROW_ROUTE(app, "/passport/api/v1/password")
