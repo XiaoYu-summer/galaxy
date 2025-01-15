@@ -17,8 +17,10 @@ using json = nlohmann::json;
 
 // 5分钟的时间戳有效期
 static const int64_t TIMESTAMP_VALID_DURATION = 5 * 60;
-static const std::unordered_set<std::string> SKIP_PATHS = {"/",       "/passport", "/version",
-                                                           "/assets", "/health",   "/postern"};
+// 路径前缀跳过列表
+static const std::unordered_set<std::string> SKIP_PATHS_PREFIX = {"/passport", "/assets", "/postern"};
+// 完整路径跳过列表
+static const std::unordered_set<std::string> SKIP_PATHS = {"/", "/version", "/health"};
 
 struct PassportMiddleware {
     struct context {};
@@ -28,10 +30,14 @@ struct PassportMiddleware {
     void before_handle(crow::request& request, crow::response& response, context& context) {
         std::string requestPath = request.url;
 
-        for (const auto& skipPath : SKIP_PATHS) {
-            if (requestPath.compare(0, skipPath.size(), skipPath) == 0) {
+        for (const auto& prefix : SKIP_PATHS_PREFIX) {
+            if (requestPath.compare(0, prefix.size(), prefix) == 0) {
                 return;
             }
+        }
+
+        if (SKIP_PATHS.find(requestPath) != SKIP_PATHS.end()) {
+            return;
         }
 
         // 检查是否是APP对接（通过RSA认证）
