@@ -1,13 +1,9 @@
-#include "devices/KingrayControlMessage.h"
 #include "common/LoggerWrapper.h"
+#include "devices/KingrayControlMessage.h"
 
 DEFINE_FILE_NAME("KingrayControlMessage.cpp")
 
-CommonMessage::CommonMessage()
-    : logger_(Poco::Logger::get("KingrayControlMessage"))
-{
-
-}
+CommonMessage::CommonMessage() : logger_(Poco::Logger::get("KingrayControlMessage")) {}
 
 bool CommonMessage::Serialize(Binary::Pack& pack)
 {
@@ -35,7 +31,7 @@ bool CommonMessage::Deserialize(const Binary::Unpack& unpack)
         // 消息体
         DeserializeBody(unpack);
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
         LOG_ERROR_THIS("pack deserialize error! " << e.what());
         return false;
@@ -45,16 +41,16 @@ bool CommonMessage::Deserialize(const Binary::Unpack& unpack)
 
 void CommonMessage::SerializeHeader(Binary::Pack& pack)
 {
-    pack << messageHeader_.frameHeader_ << messageHeader_.productID_
-            << messageHeader_.deviceID_ << messageHeader_.functionCode_;
+    pack << messageHeader_.frameHeader_ << messageHeader_.productID_ << messageHeader_.deviceID_
+         << messageHeader_.functionCode_;
     headerSize_ = pack.size();
 }
 
 void CommonMessage::DeserializeHeader(const Binary::Unpack& unpack)
 {
     const auto totalSize = unpack.size();
-    unpack >> messageHeader_.frameHeader_ >> messageHeader_.productID_
-            >> messageHeader_.deviceID_ >> messageHeader_.functionCode_;
+    unpack >> messageHeader_.frameHeader_ >> messageHeader_.productID_ >> messageHeader_.deviceID_ >>
+        messageHeader_.functionCode_;
     headerSize_ = totalSize - unpack.size();
 }
 
@@ -76,7 +72,7 @@ void McuNetInfoGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
 void McuNetInfoSetRequestMsg::SerializeBody(Binary::Pack& pack)
 {
     // 消息体大小
-    const auto dataLen = sizeof(netInfo_) / sizeof(uint32_t);
+    const uint32_t dataLen = sizeof(netInfo_) / sizeof(uint32_t);
     pack << dataLen;
     const auto bodySize = pack.size();
     // 消息体

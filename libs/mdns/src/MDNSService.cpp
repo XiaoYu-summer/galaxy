@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include "MDNSService.h"
-#include "Poco/Logger.h"
 #include "Poco/Runnable.h"
 #include "Poco/Thread.h"
 #include "Poco/Timestamp.h"
@@ -17,10 +16,9 @@
 
 namespace mdns
 {
-
+DEFINE_FILE_NAME("MDNSService.cpp");
 namespace
 {
-
 // 辅助函数：将sockaddr转换为字符串
 int MdnsStringFromSockaddr(const struct sockaddr* addr, size_t addrlen, char* buffer, size_t capacity)
 {
