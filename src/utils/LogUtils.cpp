@@ -1,36 +1,13 @@
-#include <boost/filesystem.hpp>
 #include <iostream>
-
-#include "libaoip/include/SpdlogAdapter.h"
-#include "utils/FileUtils.h"
 #include "utils/LogUtils.h"
+#include "common/LoggerWrapper.h"
 
-FileLogHandler::FileLogHandler() {
-    try {
-        auto maxSize = 1048576 * 20;
-        auto maxFiles = 10;
-        boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
-        std::cout << "Current path: " << appCurrentPath << std::endl;
-#ifdef NDEBUG
-        boost::filesystem::path logPath = appCurrentPath.parent_path() / "logs" / "galaxy-server.log";
-#else
-        boost::filesystem::path logPath = appCurrentPath / "logs" / "galaxy-server.log";
-#endif
-        std::cout << "Log path: " << logPath << std::endl;
-        logger_ = spdlog::rotating_logger_mt("galaxy_logger", logPath.string(), maxSize, maxFiles);
-        logger_->set_pattern("%Y-%m-%d %H:%M:%S[%l] %v");
-        logger_->info("Log init success!\n current path: " + appCurrentPath.string() +
-                      "\n log path: " + logPath.string());
-        logger_->flush();
+DEFINE_FILE_NAME("LogUtils.cpp")
 
-        auto aoipLogger = std::make_shared<aoip::SpdLogAdapter>(logger_);
-        aoip::LogManager::GetInstance().SetLogger(aoipLogger);
+FileLogHandler::FileLogHandler()
+    : logger_(Poco::Logger::get("Crow"))
+{
 
-    } catch (const spdlog::spdlog_ex& ex) {
-        std::cerr << "Log initialization failed: " << ex.what() << std::endl;
-    } catch (const std::exception& ex) {
-        std::cerr << "Log initialization failed: " << ex.what() << std::endl;
-    }
 }
 
 void FileLogHandler::log(std::string message, crow::LogLevel level) {
@@ -39,20 +16,19 @@ void FileLogHandler::log(std::string message, crow::LogLevel level) {
 #endif
     switch (level) {
         case crow::LogLevel::Debug:
-            logger_->debug(message);
+            LOG_DEBUG(message);
             break;
         case crow::LogLevel::Info:
-            logger_->info(message);
+            LOG_INFO(message);
             break;
         case crow::LogLevel::Warning:
-            logger_->warn(message);
+            LOG_WARNING(message);
             break;
         case crow::LogLevel::Error:
-            logger_->error(message);
+            LOG_ERROR(message);
             break;
         case crow::LogLevel::Critical:
-            logger_->critical(message);
+            LOG_CRITICAL(message);
             break;
     }
-    logger_->flush();
 }

@@ -1,4 +1,6 @@
 #include "AsyncProtocol.h"
+#include "Logger.h"
+#include "code/ErrorCode.h"
 
 namespace aoip
 {
@@ -69,10 +71,6 @@ AsyncProtocol::AsyncProtocol(const ProtocolConfig& config)
       socket_(std::make_unique<UdpSocket>(MakeUDPConfig(config))),
       requestManager_(std::make_unique<RequestManager>())
 {
-    if (config.enableLogging_) {
-        DefaultLogger::GetInstance().SetLogFile(config.logFile_);
-        DefaultLogger::GetInstance().SetLogLevel(config.logLevel_);
-    }
 }
 
 AsyncProtocol::~AsyncProtocol() { Stop(); }

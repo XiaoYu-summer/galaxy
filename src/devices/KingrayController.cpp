@@ -1,16 +1,16 @@
-#include "devices/JingRuiController.h"
-#include "devices/JingRuiControlMessage.h"
+#include "devices/KingrayController.h"
+#include "devices/KingrayControlMessage.h"
 
-JingRuiController::JingRuiController(const DeviceNetworkInfo& info)
+KingrayController::KingrayController(const DeviceNetworkInfo& info)
     : DeviceController(info)
       
 {
     InitTransport();
 }
 
-void JingRuiController::InitTransport()
+void KingrayController::InitTransport()
 {
-    ProtocolConfig config;
+    aoip::ProtocolConfig config;
     config.masterIp_ = networkInfo_.unicastIp;
     config.masterPort_ = networkInfo_.unicastPort;
     config.broadcast_ = false;
@@ -22,7 +22,7 @@ void JingRuiController::InitTransport()
     }
 }
 
-std::string JingRuiController::GetFunctionCode(const std::vector<uint8_t>& response) const
+std::string KingrayController::GetFunctionCode(const std::vector<uint8_t>& response) const
 {
     Binary::Unpack unpack(response.data(), response.size());
     CommonMessage message;
@@ -31,7 +31,7 @@ std::string JingRuiController::GetFunctionCode(const std::vector<uint8_t>& respo
     return GetFunctionCodeStr(message.messageHeader_.functionCode_);
 }
 
-std::string JingRuiController::GetDeviceName(const std::string& deviceId) const
+std::string KingrayController::GetDeviceName(const std::string& deviceId) const
 {
     Binary::Pack pack;
     DeviceNameGetRequestMsg request;
@@ -52,17 +52,17 @@ std::string JingRuiController::GetDeviceName(const std::string& deviceId) const
      return "";
 }
 
-DeviceAddress JingRuiController::GetDeviceAddress(const std::string& deviceId) const
+DeviceAddress KingrayController::GetDeviceAddress(const std::string& deviceId) const
 {
     return {};
 }
 
-DeviceVersion JingRuiController::GetDeviceVersion(const std::string& deviceId) const
+DeviceVersion KingrayController::GetDeviceVersion(const std::string& deviceId) const
 {
     return {};
 }
 
-bool JingRuiController::GetDeviceOnlineStatus(const std::string& deviceId) const
+bool KingrayController::GetDeviceOnlineStatus(const std::string& deviceId) const
 {
     return false;
 }

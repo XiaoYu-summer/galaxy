@@ -1,10 +1,7 @@
 #pragma once
 #include <crow.h>
-#include <spdlog/spdlog.h>
-
 #include <string>
-
-#include "spdlog/sinks/rotating_file_sink.h"
+#include "Poco/Logger.h"
 
 class FileLogHandler : public crow::ILogHandler {
    public:
@@ -12,5 +9,5 @@ class FileLogHandler : public crow::ILogHandler {
     void log(std::string message, crow::LogLevel level) override;
 
    private:
-    std::shared_ptr<spdlog::logger> logger_;
+    Poco::Logger& logger_;
 };

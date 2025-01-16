@@ -4,13 +4,13 @@
 #include "AsyncProtocol.h"
 
 
-class DingLiController : public DeviceController
+class DigisynController : public DeviceController
                        , public aoip::UdpCallback
-                       , public std::enable_shared_from_this<DingLiController>
+                       , public std::enable_shared_from_this<DigisynController>
 {
 public:
-    DingLiController(const DeviceNetworkInfo& info);
-    virtual ~DingLiController() = default;
+    DigisynController(const DeviceNetworkInfo& info);
+    virtual ~DigisynController() = default;
 
     virtual std::string GetFunctionCode(const std::vector<uint8_t>& response) const override;
     virtual std::string GetDeviceName(const std::string& deviceId) const override;

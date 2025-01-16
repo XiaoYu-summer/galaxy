@@ -10,11 +10,22 @@
 #include <thread>
 #include <vector>
 
-#include "Protocol.h"
 #include "UdpSocket.h"
 
 namespace aoip
 {
+struct ProtocolConfig
+{
+    std::string masterIp_{"0.0.0.0"};
+    uint16_t slavePort_{50000};
+    uint16_t masterPort_{60000};
+    uint32_t timeoutMs_{1000};
+    uint32_t maxRetries_{3};
+    uint32_t productId_{0x02020483};
+    uint16_t deviceId_{0xFFFF};
+    bool broadcast_{true};
+    size_t recvBufferSize_{4096};
+};
 
 struct Request
 {

@@ -101,6 +101,7 @@ target_link_libraries(galaxy
         $<BUILD_INTERFACE:jr_aoip>
         $<BUILD_INTERFACE:mh_mdns>
         Poco::Foundation
+        Poco::Util
 )
 
 if(APPLE)

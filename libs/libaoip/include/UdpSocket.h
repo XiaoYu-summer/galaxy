@@ -3,12 +3,11 @@
 #include <string>
 #include <vector>
 
-#include "Logger.h"
-#include "MemoryPool.h"
+namespace aoip
+{
 
-namespace aoip {
-
-struct UdpConfig {
+struct UdpConfig
+{
     std::string bindIp_{"0.0.0.0"};
     uint16_t bindPort_{0};
     bool broadcast_{false};
@@ -17,7 +16,8 @@ struct UdpConfig {
     int timeoutMs_{1000};
 };
 
-class UdpSocket {
+class UdpSocket
+{
    public:
     explicit UdpSocket(const UdpConfig& config);
     ~UdpSocket();
@@ -27,13 +27,15 @@ class UdpSocket {
 
     bool SendTo(const void* data, size_t len, const std::string& ip, uint16_t port);
 
-    bool SendTo(const std::vector<uint8_t>& data, const std::string& ip, uint16_t port) {
+    bool SendTo(const std::vector<uint8_t>& data, const std::string& ip, uint16_t port)
+    {
         return SendTo(data.data(), data.size(), ip, port);
     }
 
     bool Broadcast(const void* data, size_t len, uint16_t port);
 
-    bool Broadcast(const std::vector<uint8_t>& data, uint16_t port) {
+    bool Broadcast(const std::vector<uint8_t>& data, uint16_t port)
+    {
         return Broadcast(data.data(), data.size(), port);
     }
 

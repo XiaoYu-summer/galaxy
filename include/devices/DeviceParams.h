@@ -10,8 +10,8 @@ enum class DeviceType : uint8_t
 
 enum class DeviceVendor : uint8_t
 {
-    JING_RUI,
-    DING_LI,
+    KINGRAY,
+    DIGISYN,
     UNKNOW
 };
 

@@ -8,13 +8,13 @@ struct DeviceNetworkInfo;
 struct DeviceAddress;
 struct DeviceVersion;
 
-class JingRuiController : public DeviceController
+class KingrayController : public DeviceController
                         , public aoip::UdpCallback
-                        , public std::enable_shared_from_this<JingRuiController>
+                        , public std::enable_shared_from_this<KingrayController>
 {
 public:
-    JingRuiController(const DeviceNetworkInfo& info);
-    virtual ~JingRuiController() = default;
+    KingrayController(const DeviceNetworkInfo& info);
+    virtual ~KingrayController() = default;
 
     virtual std::string GetFunctionCode(const std::vector<uint8_t>& response) const override; 
     virtual std::string GetDeviceName(const std::string& deviceId) const override;
