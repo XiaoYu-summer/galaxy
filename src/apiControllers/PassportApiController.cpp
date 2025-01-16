@@ -4,11 +4,11 @@
 #include <chrono>
 
 #include "Constant.h"
-#include "controllers/PassportController.h"
+#include "apiControllers/PassportApiController.h"
 #include "utils/PassportUtils.h"
 #include "utils/ResUtils.h"
 
-void PassportController::InitRoutes(CrowApp& app) {
+void PassportApiController::InitRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/passport/api/v1/token")
         .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
             auto requestBody = crow::json::load(request.body);

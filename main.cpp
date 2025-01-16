@@ -25,7 +25,7 @@
 #include "types/App.h"
 #include "utils/LogUtils.h"
 #include "utils/PassportUtils.h"
-#include "controllers/DevicesController.h"
+#include "apiControllers/DevicesApiController.h"
 #include "common/LoggerWrapper.h"
 
 void InitLogger()

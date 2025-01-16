@@ -1,7 +1,7 @@
 #pragma once
 #include "types/App.h"
 
-class PosternController {
+class PassportApiController {
    public:
     static void InitRoutes(CrowApp& app);
 };

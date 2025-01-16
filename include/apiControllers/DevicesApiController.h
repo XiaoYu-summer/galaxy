@@ -3,11 +3,11 @@
 #include "types/App.h"
 #include "devices/DeviceManager.h"
 
-class DevicesController
+class DevicesApiController
 {
 public:
-    DevicesController(std::shared_ptr<DeviceManager> deviceManager);
-    ~DevicesController() = default;
+    DevicesApiController(std::shared_ptr<DeviceManager> deviceManager);
+    ~DevicesApiController() = default;
     void InitRoutes(CrowApp& app);
 private:
 

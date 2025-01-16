@@ -1,7 +1,7 @@
 #pragma once
 #include "types/App.h"
 
-class SystemController {
+class UpgradeApiController {
    public:
     static void InitRoutes(CrowApp& app);
 };

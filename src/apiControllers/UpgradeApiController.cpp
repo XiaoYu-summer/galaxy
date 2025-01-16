@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 #include "code/ErrorCode.h"
-#include "controllers/UpgradeController.h"
+#include "apiControllers/UpgradeApiController.h"
 #include "services/upgrade/ServiceUpgradeService.h"
 #include "services/upgrade/SystemUpgradeService.h"
 #include "utils/FileUtils.h"
@@ -21,7 +21,7 @@ bool ValidateUpgradeParameters(crow::multipart::message& formData) {
            validTypes.find(upgradeType.body) == validTypes.end();
 }
 
-void UpgradeController::InitRoutes(CrowApp& app) {
+void UpgradeApiController::InitRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/resource/api/v1/update")
         .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
             auto contentLength = request.get_header_value("Content-Length");

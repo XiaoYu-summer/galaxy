@@ -1,9 +1,9 @@
 #include <boost/process.hpp>
 
-#include "controllers/PosternController.h"
+#include "apiControllers/PosternApiController.h"
 #include "utils/ResUtils.h"
 
-void PosternController::InitRoutes(CrowApp& app) {
+void PosternApiController::InitRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/postern/api/service/restart")
         .methods("POST"_method)([&](const crow::request& request, crow::response& response) {
             auto requestBody = crow::json::load(request.body);
