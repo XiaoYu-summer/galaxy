@@ -12,3 +12,8 @@ DeviceInfo DeviceAgent::GetDeviceInfo(const std::string& deviceId) const
     DeviceInfo info;
     return info;
 }
+
+bool DeviceAgent::ResetDevice()
+{
+    return false;
+}

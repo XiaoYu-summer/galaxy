@@ -14,6 +14,7 @@ public:
     ~DeviceManager() = default;
     void AddDevice(const DeviceNetworkInfo& info);
     void DelDevice(const std::string& deviceId);
+    std::shared_ptr<Device> get(const std::string& deviceId);
 
     virtual void OnUpdateDeviceStatus(const DeviceNetworkInfo& info, bool onLine) override;
 private:

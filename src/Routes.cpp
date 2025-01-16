@@ -3,6 +3,7 @@
 #include "apiControllers/PosternApiController.h"
 #include "apiControllers/SystemApiController.h"
 #include "apiControllers/UpgradeApiController.h"
+#include "apiControllers/DevicesApiController.h"
 
 void SetupRoutes(CrowApp& app) {
     CROW_ROUTE(app, "/")
@@ -15,4 +16,5 @@ void SetupRoutes(CrowApp& app) {
     UpgradeApiController::InitRoutes(app);
     PosternApiController::InitRoutes(app);
     PassportApiController::InitRoutes(app);
+    DevicesApiController::InitRoutes(app);
 };

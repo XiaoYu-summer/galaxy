@@ -1,15 +1,14 @@
 #pragma once
 #include <memory>
 #include "types/App.h"
-#include "devices/DeviceManager.h"
 
+class DeviceManager;
 class DevicesApiController
 {
 public:
-    DevicesApiController(std::shared_ptr<DeviceManager> deviceManager);
+    DevicesApiController();
     ~DevicesApiController() = default;
-    void InitRoutes(CrowApp& app);
+    static void InitRoutes(CrowApp& app);
 private:
-
-    std::weak_ptr<DeviceManager> deviceManager_;
+    static std::shared_ptr<DeviceManager> deviceManager_;
 };

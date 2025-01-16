@@ -16,6 +16,17 @@ void DeviceManager::Init()
    // 创建设备发现任务
 }
 
+std::shared_ptr<Device> DeviceManager::get(const std::string& deviceId)
+{
+    std::shared_ptr<Device> device = nullptr;
+    auto it = devices_.find(deviceId);
+    if (it != devices_.end())
+    {
+        device = it->second;
+    }
+    return device;
+}
+
 void DeviceManager::AddDevice(const DeviceNetworkInfo& info)
 {
     if (!devices_.count(info.deviceId))
