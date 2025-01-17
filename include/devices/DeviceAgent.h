@@ -4,11 +4,11 @@
 #include "devices/Device.h"
 #include "devices/DeviceController.h"
 
-class DeviceImpl : public Device
+class DeviceAgent : public Device
 {
 public:
-    DeviceImpl(const DeviceNetworkInfo& info, DeviceController* controller = nullptr);
-    virtual ~DeviceImpl() = default;
+    DeviceAgent(const DeviceNetworkInfo& info, DeviceController* controller = nullptr);
+    virtual ~DeviceAgent() = default;
     virtual DeviceInfo GetDeviceInfo(const std::string& deviceId) const override;
 private:
     std::shared_ptr<DeviceController> controller_;
