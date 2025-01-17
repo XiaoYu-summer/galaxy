@@ -106,7 +106,9 @@
     "semaphore": "cpp",
     "stop_token": "cpp",
     "thread": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "ranges": "cpp",
+    "cfenv": "cpp"
   },
   "cmake.configureOnOpen": true,
   "cmake.sourceDirectory": "${workspaceFolder}",

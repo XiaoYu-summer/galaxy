@@ -16,7 +16,7 @@ void DeviceManager::Init()
    // 创建设备发现任务
 }
 
-std::shared_ptr<Device> DeviceManager::get(const std::string& deviceId)
+std::shared_ptr<Device> DeviceManager::Get(const std::string& deviceId) const
 {
     std::shared_ptr<Device> device = nullptr;
     auto it = devices_.find(deviceId);
