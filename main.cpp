@@ -22,7 +22,6 @@
 #include "apiControllers/DevicesApiController.h"
 #include "common/LoggerWrapper.h"
 #include "config/AppConfig.h"
-#include "controllers/DevicesController.h"
 #include "mdns/MDNSService.h"
 #include "middleware/PassportMiddleware.h"
 #include "types/App.h"
