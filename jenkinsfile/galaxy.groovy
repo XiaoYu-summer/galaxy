@@ -29,9 +29,9 @@ pipeline {
 #include <string>
 
 namespace VersionInfo {
-const std::string version = \\"${branchx}\\";
-const std::string hash = \\"${hash}\\";
-const std::string count = \\"${count}\\";
+const std::string VERSION = \\"${branchx}\\";
+const std::string GIT_HASH = \\"${hash}\\";
+const std::string COMMIT_COUNT = \\"${count}\\";
 }  // namespace VersionInfo" > include/Version.h
                     """
                     withDockerRegistry([credentialsId: '6e5c1650-13f9-435e-ad7e-c0a20d0774a1', url: "${docker_registry}"]) {
