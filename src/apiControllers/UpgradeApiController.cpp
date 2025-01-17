@@ -56,7 +56,7 @@ void UpgradeApiController::InitRoutes(CrowApp& app) {
                     }
                     return SuccessResponse(response, "Upgrade initiated successfully");
                 } catch (const std::exception& error) {
-                    return FailResponse(response, ErrorCode::UPGRADE_ERROR, error.what());
+                    return FailResponse(response, ErrorCode::UPDATE_ERROR, error.what());
                 }
             } else {
                 return FailResponse(response, ErrorCode::MD5_MISMATCH, "MD5 verification failed");
@@ -83,7 +83,7 @@ void UpgradeApiController::InitRoutes(CrowApp& app) {
                 // }
                 return SuccessResponse(response, "Rollback initiated successfully");
             } catch (const std::exception& error) {
-                return FailResponse(response, ErrorCode::UPGRADE_ERROR, error.what());
+                return FailResponse(response, ErrorCode::UPDATE_ERROR, error.what());
             }
         });
 }
