@@ -9,8 +9,15 @@ class DeviceAgent : public Device
 public:
     DeviceAgent(const DeviceNetworkInfo& info, DeviceController* controller = nullptr);
     virtual ~DeviceAgent() = default;
-    virtual DeviceInfo GetDeviceInfo(const std::string& deviceId) const override;
-    virtual bool ResetDevice() override;
+    virtual bool GetInfo(DeviceInfo&) const override;
+    virtual bool CheckSpeaker() override;
+    virtual bool Reset() override;
+    virtual bool SetLock(bool lock) override;
+    virtual bool SetVolume(uint16_t volume) override;
+    virtual bool Flashing() override;
+    virtual bool Disconnect() override;
+    virtual bool IsConnecting() override;
+    virtual bool SetMute(bool mute) override;
 private:
     std::shared_ptr<DeviceController> controller_;
 };

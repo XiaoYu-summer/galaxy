@@ -7,13 +7,47 @@ DeviceAgent::DeviceAgent(const DeviceNetworkInfo& info, DeviceController* contro
     
 }
 
-DeviceInfo DeviceAgent::GetDeviceInfo(const std::string& deviceId) const
+bool DeviceAgent::GetInfo(DeviceInfo& info) const
 {
-    DeviceInfo info;
-    return info;
+    return false;
 }
 
-bool DeviceAgent::ResetDevice()
+bool DeviceAgent::CheckSpeaker()
+{
+    return false;
+}
+
+bool DeviceAgent::Reset()
+{
+    return false;
+}
+
+bool DeviceAgent::SetLock(bool lock)
+{
+    return false;
+}
+
+bool DeviceAgent::SetVolume(const uint16_t volume)
+{
+    return false;   
+}
+
+bool DeviceAgent::Flashing()
+{
+    return false;
+}
+
+bool DeviceAgent::Disconnect()
+{
+    return false;
+}
+
+bool DeviceAgent::IsConnecting()
+{
+    return false;
+}
+
+bool DeviceAgent::SetMute(bool mute)
 {
     return false;
 }
