@@ -27,6 +27,29 @@ std::shared_ptr<Device> DeviceManager::Get(const std::string& deviceId) const
     return device;
 }
 
+std::vector<std::shared_ptr<Device>> DeviceManager::DevicesFilter(const std::function<bool(const std::shared_ptr<Device>&)>& predicate) const
+{
+    std::vector<std::shared_ptr<Device>> devices;
+    for (const auto& item : devices_)
+    {
+        if (predicate(item.second))
+        {
+            devices.push_back(item.second);
+        }
+    }
+    return devices;
+}
+
+std::vector<std::shared_ptr<Device>> DeviceManager::GetConnectingDevices() const
+{
+    return DevicesFilter([](const auto& device){ return device->IsConnecting(); });
+}
+
+std::vector<std::shared_ptr<Device>> DeviceManager::GetActiveMicrophoneDevices() const
+{
+    return DevicesFilter([](const auto& device){ return false; });
+}
+
 void DeviceManager::AddDevice(const DeviceNetworkInfo& info)
 {
     if (!devices_.count(info.deviceId))
