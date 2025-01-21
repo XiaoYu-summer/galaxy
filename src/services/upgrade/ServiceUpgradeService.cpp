@@ -17,7 +17,7 @@ void UpgradeService(const std::string& filePath, const std::string& fileName) {
             throw std::runtime_error("File format error");
         }
 // 如果是调试就不实际解压文件
-#ifdef NDEBUG
+#if !defined(_DEBUG) || defined(NDEBUG)
         boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
         FileUtils::ExtractTarGzFile(filePath, appCurrentPath.parent_path().string());
 

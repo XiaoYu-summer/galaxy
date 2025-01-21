@@ -28,7 +28,7 @@ FileLogHandler::FileLogHandler()
 }
 
 void FileLogHandler::log(std::string message, crow::LogLevel level) {
-#ifdef NDEBUG
+#if defined(_DEBUG) && !defined(NDEBUG)
     std::cout << message << std::endl;
 #endif
     switch (level) {
@@ -94,7 +94,9 @@ static void _InitLogger()
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     // console channel
-#ifdef _DEBUG
+#if !defined(_DEBUG) || defined(NDEBUG)
+    Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(fileChannel));
+#else
 #ifdef _WIN32
     Poco::AutoPtr<Poco::WindowsColorConsoleChannel> logConsole = new Poco::WindowsColorConsoleChannel();
     splitterChannel->addChannel(logConsole);
@@ -112,8 +114,6 @@ static void _InitLogger()
 #endif
     splitterChannel->addChannel(fileChannel);
     Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(splitterChannel));
-#else
-    Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(fileChannel));
 #endif
 
     Poco::AutoPtr<Poco::FormattingChannel> formattingChannel(
@@ -126,10 +126,10 @@ static void _InitLogger()
         Poco::Logger::root().setChannel(*it, formattingChannel);
     }
     Poco::Logger::root().create("LoadManager", formattingChannel);
-#ifdef _DEBUG
-    Poco::Logger::root().setLevel(Poco::Message::PRIO_DEBUG);
-#else
+#if !defined(_DEBUG) || defined(NDEBUG)
     Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
+#else
+    Poco::Logger::root().setLevel(Poco::Message::PRIO_DEBUG);
 #endif
 }
 

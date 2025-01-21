@@ -14,7 +14,7 @@ void UpgradeSystem(const std::string& filePath, const std::string& fileName) {
         if (!FileUtils::CheckFileFormat(fileName, ".img.tar.gz")) {
             throw std::runtime_error("File format error");
         }
-#ifdef NDEBUG
+#if !defined(_DEBUG) || defined(NDEBUG)
         FileUtils::ExtractTarGzFile(filePath, "/userdata");
         // 将解压的文件重命名
         boost::filesystem::path sourcePath = "/userdata/" + fileName;

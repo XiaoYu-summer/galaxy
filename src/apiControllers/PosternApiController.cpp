@@ -11,7 +11,7 @@ void PosternApiController::InitRoutes(CrowApp& app) {
                 return FailResponse(response, ErrorCode::PARAMS_ERROR, "Invalid parameters");
             }
 
-#ifdef NDEBUG
+#if !defined(_DEBUG) || defined(NDEBUG)
             std::string restartCommand = "sleep 0.01 && /etc/init.d/S99galaxy restart";
             boost::process::child restartProcess(restartCommand, boost::process::std_out > stdout,
                                                  boost::process::std_err > stderr);

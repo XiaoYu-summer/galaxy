@@ -11,7 +11,7 @@ namespace PassportUtils {
  */
 inline boost::filesystem::path GetAccountPasswordFilePath() {
     boost::filesystem::path appCurrentPath = boost::filesystem::current_path();
-#ifdef NDEBUG
+#if !defined(_DEBUG) || defined(NDEBUG)
     boost::filesystem::path filePath = appCurrentPath.parent_path() / "passport" / "passport.json";
 #else
     boost::filesystem::path filePath = appCurrentPath / "passport" / "passport.json";
