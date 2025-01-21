@@ -11,3 +11,5 @@ class FileLogHandler : public crow::ILogHandler {
    private:
     Poco::Logger& logger_;
 };
+
+void InitLogger();

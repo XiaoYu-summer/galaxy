@@ -1,115 +1,11 @@
 #pragma execution_character_set("utf-8")
-#define CROW_STATIC_DIRECTORY "assets/"
-#define CROW_STATIC_ENDPOINT "/assets/<path>"
-#include <Poco/Path.h>
 
-#include "Poco/AutoPtr.h"
-#include "Poco/Environment.h"
-#include "Poco/File.h"
-#include "Poco/FileChannel.h"
-#include "Poco/FormattingChannel.h"
-#include "Poco/Logger.h"
-#include "Poco/PatternFormatter.h"
-#include "Poco/SplitterChannel.h"
-#include "Poco/Util/Application.h"
-#ifdef _WIN32
-#include "Poco/WindowsConsoleChannel.h"
-#else
-#include "Poco/ConsoleChannel.h"
-#endif
-#include "Poco/AsyncChannel.h"
 #include "Routes.h"
-#include "apiControllers/DevicesApiController.h"
-#include "common/LoggerWrapper.h"
 #include "config/AppConfig.h"
 #include "mdns/MDNSService.h"
-#include "middleware/PassportMiddleware.h"
 #include "types/App.h"
 #include "utils/LogUtils.h"
 #include "utils/PassportUtils.h"
-
-void InitLogger()
-{
-    // logging formats
-    Poco::AutoPtr<Poco::PatternFormatter> patternFormatter(
-        new Poco::PatternFormatter("[%Y-%m-%d %H:%M:%S:%i tid=%I %q %s] %t (%U:%u)"));
-
-    // splitter channel
-    Poco::AutoPtr<Poco::SplitterChannel> splitterChannel(new Poco::SplitterChannel());
-
-    // file channels
-    Poco::AutoPtr<Poco::FileChannel> fileChannel(new Poco::FileChannel());
-
-    Poco::Timestamp::fromEpochTime(time(0));
-
-    std::string suffix = Poco::Environment::get("LOG_FILE_SUFFIX", std::string("log"));
-    std::string filepath = "./logs/galaxy." + (suffix.empty() ? "log" : suffix);
-    Poco::Path pocoLogFilePath = Poco::Path::expand(filepath);
-    try
-    {
-        Poco::File(pocoLogFilePath.parent()).createDirectories();
-    }
-    catch (Poco::Exception&)
-    {
-        poco_error(Poco::Util::Application::instance().logger(), "Create logs directory failed");
-        return;
-    }
-
-    fileChannel->setProperty("rotation", "100M");
-    fileChannel->setProperty("archive", "timestamp");
-    fileChannel->setProperty("compress", "true");
-    fileChannel->setProperty("purgeAge", "4 weeks");
-    fileChannel->setProperty("flush", "false");
-    fileChannel->setProperty("path", filepath);
-
-    //////////  This is only for DEBUG/DEV Environment.               ////////////////////////////
-    //////////  Update the purge strategy to purge by log file count. ////////////////////////////
-    const auto purgeCount = Poco::Environment::get("MAX_LOG_PURGE_COUNT", "10");
-    if (!purgeCount.empty())
-    {
-        fileChannel->setProperty("purgeCount", purgeCount);
-    }
-    //////////////////////////////////////////////////////////////////////////////////////////////
-
-    // console channel
-#ifdef _DEBUG
-#ifdef _WIN32
-    Poco::AutoPtr<Poco::WindowsColorConsoleChannel> logConsole = new Poco::WindowsColorConsoleChannel();
-    splitterChannel->addChannel(logConsole);
-#else
-    Poco::AutoPtr<Poco::ColorConsoleChannel> colorConsoleChannel(new Poco::ColorConsoleChannel());
-    colorConsoleChannel->setProperty("traceColor", "gray");
-    colorConsoleChannel->setProperty("debugColor", "white");
-    colorConsoleChannel->setProperty("informationColor", "green");
-    colorConsoleChannel->setProperty("noticeColor", "blue");
-    colorConsoleChannel->setProperty("warningColor", "yellow");
-    colorConsoleChannel->setProperty("errorColor", "lightRed");
-    colorConsoleChannel->setProperty("criticalColor", "magenta");
-    colorConsoleChannel->setProperty("fatalColor", "red");
-    splitterChannel->addChannel(colorConsoleChannel);
-#endif
-    splitterChannel->addChannel(fileChannel);
-    Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(splitterChannel));
-#else
-    Poco::AutoPtr<Poco::AsyncChannel> asyncChannel(new Poco::AsyncChannel(fileChannel));
-#endif
-
-    Poco::AutoPtr<Poco::FormattingChannel> formattingChannel(
-        new Poco::FormattingChannel(patternFormatter, asyncChannel));
-
-    std::vector<std::string> logNames;
-    Poco::Logger::root().names(logNames);
-    for (auto it = logNames.begin(); it != logNames.end(); ++it)
-    {
-        Poco::Logger::root().setChannel(*it, formattingChannel);
-    }
-    Poco::Logger::root().create("LoadManager", formattingChannel);
-#ifdef _DEBUG
-    Poco::Logger::root().setLevel(Poco::Message::PRIO_DEBUG);
-#else
-    Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
-#endif
-}
 
 int main()
 {
