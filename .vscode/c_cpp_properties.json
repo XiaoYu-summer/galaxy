@@ -48,7 +48,9 @@
                 "/root/.conan2/p/boost90d47720aee1a/p/include/**",
                 "/root/.conan2/p/nlohm0567ffc90cfc1/p/include/**"
             ],
-            "defines": [],
+            "defines": [
+                "_DEBUG"
+            ],
             "compilerPath": "/usr/bin/gcc",
             "cppStandard": "c++14",
             "intelliSenseMode": "gcc-x64",

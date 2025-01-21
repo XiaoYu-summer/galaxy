@@ -15,6 +15,16 @@ if(WIN32)
     endif()
 endif()
 
+# 判断是否是 LINUX 环境
+if(UNIX)
+    # 设置 _DEBUG 或 NDEBUG 宏定义
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_compile_definitions(${PROJECT_NAME} PRIVATE _DEBUG)
+    else()
+        add_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+    endif()
+endif()
+
 # 根据不同的操作系统环境包含相应的 Conan 工具链文件
 if(APPLE)
     set(CONAN_TOOLCHAIN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}/generators/conan_toolchain.cmake")
