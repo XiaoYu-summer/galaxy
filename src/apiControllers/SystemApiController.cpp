@@ -20,4 +20,11 @@ void SystemApiController::InitRoutes(CrowApp& crowApp) {
             return ResponseWithFile(response, "log.txt", logFile);
         });
     });
+
+    CROW_ROUTE(crowApp, "/system/api/v1/config-file/export").
+        methods("GET"_method)([] (const crow::request& request, crow::response& response) { 
+            HandleFileRetrievalReq(response, APP_CONFIG_ABSOLUTE_PATH, [](crow::response &response, const Poco::File &appConfigFile) {
+                return ResponseWithFile(response, APP_CONFIG_NAME, appConfigFile);
+            });
+        });
 }
