@@ -13,14 +13,11 @@
 enum class ErrorCode {
     SUCCESS                     = 200000, ///< 请求成功
     DELETE_SUCCESS              = 204000, ///< 删除成功
-    UNKNOWN_ERROR               = 400000, ///< 未知错误
-    PARAMS_ERROR                = 400100, ///< 参数错误
-    JSON_BODY_ERROR             = 400101, ///< JSON解析错误
-    DEVICEID_NOT_FOUND          = 404201, ///< 设备未找到错误
-    DEVICEID_ARRAY_EMPTY        = 404202, ///< 设备数组为空
-    MD5_MISMATCH                = 400110, ///< MD5不匹配
-    UPDATE_ERROR                = 400111, ///< 更新错误
-    DEVICE_RESET_ERROR          = 400201, ///< 设备重置错误
+    PARAMS_ERROR                = 400001, ///< 参数错误
+    JSON_BODY_ERROR             = 400002, ///< JSON解析错误
+    MD5_MISMATCH                = 400101, ///< MD5不匹配
+    UPDATE_ERROR                = 400102, ///< 更新错误
+    DEVICEID_ARRAY_EMPTY        = 400201, ///< 设备数组为空
     DEVICE_LOCK_ERROR           = 400202, ///< 设备锁定错误
     DEVICE_UNLOCK_ERROR         = 400203, ///< 设备解锁锁错误
     DEVICE_SETVOLUME_ERROR      = 400204, ///< 设备设置音量错误
@@ -30,11 +27,15 @@ enum class ErrorCode {
     DEVICE_GETINFO_ERROR        = 400208, ///< 设备信息获取错误
     DEVICE_MUTE_ERROR           = 400209, ///< 设备静音错误
     DEVICE_UNMUTE_ERROR         = 400210, ///< 设备取消静音错误
+    DEVICE_RESET_ERROR          = 400211, ///< 设备重置错误
     AUTH_ERROR                  = 401100, ///< 认证错误
     AUTH_EXPIRED                = 401101, ///< 认证过期
     PASSWORD_ERROR              = 401102, ///< 密码错误
     OLD_PASSWORD_ERROR          = 401103, ///< 旧密码错误
+    DEVICEID_NOT_FOUND          = 404001, ///< 设备未找到错误
+    FILE_NOT_FOUND              = 404002, ///< 文件未找到错误
     FILE_TOO_LARGE              = 413112, ///< 文件太大
+    UNKNOWN_ERROR               = 500001, ///< 服务器内部错误
     DEVICE_MANAGER_ERROR        = 500100, ///< 设备管理错误
 };
 
