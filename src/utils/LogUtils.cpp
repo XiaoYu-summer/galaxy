@@ -21,6 +21,14 @@
 
 DEFINE_FILE_NAME("LogUtils.cpp")
 
+constexpr const char DEFAULT_LOG_FILE_SUFFIX[] = "log";
+const std::string LOG_FILE_SUFFIX = Poco::Environment::get("LOG_FILE_SUFFIX", DEFAULT_LOG_FILE_SUFFIX);
+const std::string LOG_FILE_NAME = "galaxy." + LOG_FILE_SUFFIX;
+const std::string LOG_FILE_RELATIVE_PATH = "./logs/" + LOG_FILE_NAME;
+const Poco::Path LOG_FILE_RELATIVE_POCO = Poco::Path(LOG_FILE_RELATIVE_PATH);
+const Poco::Path LOG_FILE_ABSOLUTE_POCO = LOG_FILE_RELATIVE_POCO.absolute();
+const std::string LOG_FILE_ABSOLUTE_PATH = LOG_FILE_ABSOLUTE_POCO.toString();
+
 FileLogHandler::FileLogHandler()
     : logger_(Poco::Logger::get("Crow"))
 {
@@ -64,12 +72,9 @@ static void _InitLogger()
 
     Poco::Timestamp::fromEpochTime(time(0));
 
-    std::string suffix = Poco::Environment::get("LOG_FILE_SUFFIX", std::string("log"));
-    std::string filepath = "./logs/galaxy." + (suffix.empty() ? "log" : suffix);
-    Poco::Path pocoLogFilePath = Poco::Path::expand(filepath);
     try
     {
-        Poco::File(pocoLogFilePath.parent()).createDirectories();
+        Poco::File(Poco::Path(Poco::Path::expand(LOG_FILE_RELATIVE_PATH)).parent()).createDirectories();
     }
     catch (Poco::Exception&)
     {
@@ -82,7 +87,7 @@ static void _InitLogger()
     fileChannel->setProperty("compress", "true");
     fileChannel->setProperty("purgeAge", "4 weeks");
     fileChannel->setProperty("flush", "false");
-    fileChannel->setProperty("path", filepath);
+    fileChannel->setProperty("path", LOG_FILE_ABSOLUTE_PATH);
 
     //////////  This is only for DEBUG/DEV Environment.               ////////////////////////////
     //////////  Update the purge strategy to purge by log file count. ////////////////////////////
