@@ -4,6 +4,7 @@
 #include <Poco/StreamCopier.h>
 #include <Poco/FileStream.h>
 #include "code/ErrorCode.h"
+#include "utils/JsonParamsParseHelper.h"
 
 inline void SuccessResponse(crow::response& response, const std::string& message,
                             const crow::json::wvalue& data = crow::json::wvalue()) {
@@ -76,3 +77,41 @@ inline auto HandleFileRetrievalReq = [](crow::response &response, const std::str
     }
     handler(response, pocoFile);
 };
+
+template <typename Tuple, std::size_t Index = 0>
+ErrorCode ParseJsonParamsRecursive(const crow::json::rvalue& requestBody, Tuple& values, std::string& error_message, const std::vector<std::string>& keys) {
+    if constexpr (Index < std::tuple_size_v<Tuple>) {
+        if (Index >= keys.size()) {
+            return ErrorCode::SUCCESS;
+        }
+        if (const auto error_code = ParseJsonParams(requestBody, keys[Index], std::get<Index>(values), error_message); error_code != ErrorCode::SUCCESS) {
+            return error_code;
+        }
+        return ParseJsonParamsRecursive<Tuple, Index + 1>(requestBody, values, error_message, keys);
+    } else {
+        return ErrorCode::SUCCESS;
+    }
+}
+
+template <typename Handler, typename Tuple, std::size_t... Is>
+void CallHandler(Handler&& handler, Tuple& values, crow::response& response, std::index_sequence<Is...>) {
+    handler(std::get<Is>(values)..., response);
+}
+
+template <typename... Types, typename Handler, typename... Keys>
+inline void HandleJsonReqWithParams(const crow::request& request, crow::response& response, const Handler&& handler, const Keys&... keys) {
+    using Tuple = std::tuple<Types...>;
+    Tuple values;
+    std::string error_message;
+    const auto requestBody = crow::json::load(request.body);
+    if (!requestBody) {
+        return FailResponse(response, ErrorCode::JSON_BODY_ERROR, "Invalid JSON");
+    }
+
+    std::vector<std::string> keys_vector = {keys...};
+    if (const auto error_code = ParseJsonParamsRecursive(requestBody, values, error_message, keys_vector); ErrorCode::SUCCESS != error_code) {
+        return FailResponse(response, error_code, error_message);
+    }
+
+    CallHandler(handler, values, response, std::index_sequence_for<Types...>{});
+}
