@@ -8,23 +8,25 @@
 void SystemApiController::InitRoutes(CrowApp& crowApp) {
     CROW_ROUTE(crowApp, "/version").methods("GET"_method)([&] {
         crow::json::wvalue versionInfo(
-            {{"version", VersionInfo::VERSION}, {"hash", VersionInfo::GIT_HASH}, {"count", VersionInfo::COMMIT_COUNT}}
-        );
+            {{"version", VersionInfo::VERSION}, {"hash", VersionInfo::GIT_HASH}, {"count", VersionInfo::COMMIT_COUNT}});
         return versionInfo;
     });
 
     CROW_ROUTE(crowApp, "/health").methods("GET"_method)([] { return "OK"; });
-    
-    CROW_ROUTE(crowApp, "/log-download").methods("GET"_method)([] (const crow::request& request, crow::response& response){ 
-        HandleFileRetrievalReq(response, LOG_FILE_ABSOLUTE_PATH, [](crow::response &response, const Poco::File &logFile) {
-            return ResponseWithFile(response, "log.txt", logFile);
-        });
-    });
 
-    CROW_ROUTE(crowApp, "/system/api/v1/config-file/export").
-        methods("GET"_method)([] (const crow::request& request, crow::response& response) { 
-            HandleFileRetrievalReq(response, APP_CONFIG_ABSOLUTE_PATH, [](crow::response &response, const Poco::File &appConfigFile) {
-                return ResponseWithFile(response, APP_CONFIG_NAME, appConfigFile);
-            });
+    CROW_ROUTE(crowApp, "/log-download")
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
+            HandleFileRetrievalReq(response, LOG_FILE_ABSOLUTE_PATH,
+                [](crow::response& response, const Poco::File& logFile) {
+                    return ResponseWithFile(response, "log.txt", logFile);
+                });
+        });
+
+    CROW_ROUTE(crowApp, "/system/api/v1/config-file/export")
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
+            HandleFileRetrievalReq(response, APP_CONFIG_ABSOLUTE_PATH,
+                [](crow::response& response, const Poco::File& appConfigFile) {
+                    return ResponseWithFile(response, APP_CONFIG_NAME, appConfigFile);
+                });
         });
 }
