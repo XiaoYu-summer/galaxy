@@ -20,7 +20,7 @@ int main()
 
     // 加载APP配置
     LOG_I("Loading app configuration...");
-    if (!AppConfig::Instance().LoadConfig("config/app_config.json"))
+    if (!AppConfig::Instance().LoadConfig(APP_CONFIG_ABSOLUTE_PATH))
     {
         LOG_E("Failed to load app config");
         return 1;

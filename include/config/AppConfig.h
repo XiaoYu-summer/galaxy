@@ -7,6 +7,9 @@
 #include "models/AppInfo.h"
 #include "nlohmann/json.hpp"
 
+extern const char APP_CONFIG_NAME[];
+extern const std::string APP_CONFIG_ABSOLUTE_PATH;
+
 class AppConfig {
    public:
     static AppConfig& Instance() {

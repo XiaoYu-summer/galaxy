@@ -1,6 +1,12 @@
 #include <fstream>
-
+#include "Poco/Path.h"
 #include "config/AppConfig.h"
+
+constexpr const char APP_CONFIG_NAME[] = "app_config.json";
+const std::string APP_CONFIG_RELATIVE_PATH = std::string("./config/") + std::string(APP_CONFIG_NAME);
+const Poco::Path APP_CONFIG_RELATIVE_POCO = Poco::Path(APP_CONFIG_RELATIVE_PATH);
+const Poco::Path APP_CONFIG_ABSOLUTE_POCO = APP_CONFIG_RELATIVE_POCO.absolute();
+const std::string APP_CONFIG_ABSOLUTE_PATH = APP_CONFIG_ABSOLUTE_POCO.toString();
 
 bool AppConfig::LoadConfig(const std::string& configPath) {
     std::ifstream file(configPath);
