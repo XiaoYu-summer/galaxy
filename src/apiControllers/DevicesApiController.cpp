@@ -1,12 +1,11 @@
-#include "devices/DeviceManager.h"
-#include "devices/Device.h"
-#include "apiControllers/DevicesApiController.h"
 #include "DevicesApiParamsParseHelper.h"
+#include "apiControllers/DevicesApiController.h"
+#include "devices/Device.h"
+#include "devices/DeviceManager.h"
 
 DeviceManager DevicesApiController::deviceManager_;
 
-DevicesApiController::DevicesApiController()
-{
+DevicesApiController::DevicesApiController() {
 }
 
 static crow::json::wvalue DeviceInfoToJson(const DeviceInfo& info) {
@@ -14,102 +13,77 @@ static crow::json::wvalue DeviceInfoToJson(const DeviceInfo& info) {
     return json;
 }
 
-void DevicesApiController::InitRoutes(CrowApp& crowApp)
-{
+void DevicesApiController::InitRoutes(CrowApp& crowApp) {
     CROW_ROUTE(crowApp, "/device/api/v1/info")
-        .methods("GET"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             HandleDeviceGetReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
                 DeviceInfo info;
-                if (device->GetInfo(info))
-                {
+                if (device->GetInfo(info)) {
                     crow::json::wvalue responseData({{"data", DeviceInfoToJson(info)}});
                     return SuccessResponse(response, "Device's info is got successfully", responseData);
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_GETINFO_ERROR, "Device's info is got failed");
                 }
             });
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/speaker-check")
-        .methods("GET"_method)([] (const crow::request& request, crow::response& response){
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             HandleDeviceGetReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
-                if (device->CheckSpeaker())
-                {
+                if (device->CheckSpeaker()) {
                     return SuccessResponse(response, "Device's speaker is checked successfully");
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_CHECKSPEAKER_ERROR, "Device's speaker is checked failed");
                 }
-            }); 
+            });
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/flashing")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
-                if (device->Flashing())
-                {
+                if (device->Flashing()) {
                     return SuccessResponse(response, "Device is going to flashing");
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_RESET_ERROR, "Device falshing failed");
                 }
             });
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/reset")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
-                if (device->Reset())
-                {
+                if (device->Reset()) {
                     return SuccessResponse(response, "Device is reset successflly");
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_RESET_ERROR, "Device reset failed");
                 }
             });
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/disconnect")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
-                if (device->Disconnect())
-                {
+                if (device->Disconnect()) {
                     return SuccessResponse(response, "Device has been disconnected successfully");
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_DISCONNECT_ERROR, "Device disconnect failed");
                 }
             });
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/lock")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReqWithParams<bool>(request, "lock", response, [](const std::shared_ptr<Device>& device, const auto lock, crow::response& response) {
-                if (device->SetLock(lock))
-                {
-                    if (lock)
-                    {
+                if (device->SetLock(lock)) {
+                    if (lock) {
                         return SuccessResponse(response, "Device's has been locked successfully");
-                    }
-                    else
-                    {
+                    } else {
                         return SuccessResponse(response, "Device's has been unlocked successfully");
                     }
-                }
-                else
-                {
-                    if (lock)
-                    {
+                } else {
+                    if (lock) {
                         return FailResponse(response, ErrorCode::DEVICE_LOCK_ERROR, "Device lock failed");
-                    }
-                    else
-                    {
+                    } else {
                         return FailResponse(response, ErrorCode::DEVICE_UNLOCK_ERROR, "Device unlock failed");
                     }
                 }
@@ -117,27 +91,22 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp)
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/volume")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReqWithParams<uint16_t>(request, "volume", response, [](const std::shared_ptr<Device>& device, const auto volume, crow::response& response) {
-                if (device->SetVolume(volume))
-                {
+                if (device->SetVolume(volume)) {
                     return SuccessResponse(response, "Device's volume changed successfully");
-                }
-                else
-                {
+                } else {
                     return FailResponse(response, ErrorCode::DEVICE_SETVOLUME_ERROR, "Device volume change failed");
                 }
-            }); 
+            });
         });
 
     CROW_ROUTE(crowApp, "/devices/api/v1/list/connected")
-        .methods("GET"_method)([] (const crow::request& request, crow::response& response){
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
-            for (const auto& device : deviceManager_.GetConnectingDevices())
-            {
+            for (const auto& device : deviceManager_.GetConnectingDevices()) {
                 DeviceInfo info;
-                if (device->GetInfo(info))
-                {
+                if (device->GetInfo(info)) {
                     devicesInfo.push_back(DeviceInfoToJson(info));
                 }
             }
@@ -146,13 +115,11 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp)
         });
 
     CROW_ROUTE(crowApp, "/devices/api/v1/list/active-microphone")
-        .methods("GET"_method)([] (const crow::request& request, crow::response& response){
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
-            for (const auto& device : deviceManager_.GetActiveMicrophoneDevices())
-            {
+            for (const auto& device : deviceManager_.GetActiveMicrophoneDevices()) {
                 DeviceInfo info;
-                if (device->GetInfo(info))
-                {
+                if (device->GetInfo(info)) {
                     devicesInfo.push_back(DeviceInfoToJson(info));
                 }
             }
@@ -161,54 +128,38 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp)
         });
 
     CROW_ROUTE(crowApp, "/devices/api/v1/mute")
-        .methods("POST"_method)([] (const crow::request& request, crow::response& response){ 
+        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicesPostReqWithParams<bool>(request, "mute", response, [](const std::unordered_map<std::string, std::shared_ptr<Device>>& devices, const auto mute, crow::response& response) {
                 crow::json::wvalue::list failDevices;
                 bool success = false;
 
-                for (const auto& item : devices)
-                {
+                for (const auto& item : devices) {
                     const auto& deviceId = item.first;
                     const auto& device = item.second;
                     if (!device->SetMute(mute)) {
                         failDevices.push_back(deviceId);
-                    }
-                    else {
+                    } else {
                         success = true;
                     }
                 }
 
-                if (!success)
-                {
-                    if (mute)
-                    {
+                if (!success) {
+                    if (mute) {
                         return FailResponse(response, ErrorCode::DEVICE_MUTE_ERROR, "Devices' mute failed", failDevices);
-                    }
-                    else
-                    {
+                    } else {
                         return FailResponse(response, ErrorCode::DEVICE_UNMUTE_ERROR, "Devices' unmute failed", failDevices);
                     }
-                }
-                else if (!failDevices.empty())
-                {
+                } else if (!failDevices.empty()) {
                     crow::json::wvalue responseDate({{"failDevices", failDevices}});
-                    if (mute)
-                    {
+                    if (mute) {
                         return SuccessResponse(response, "Devices' mute changed with wrong", responseDate);
-                    }
-                    else
-                    {
+                    } else {
                         return SuccessResponse(response, "Devices' unmute changed with wrong", responseDate);
                     }
-                }
-                else
-                {
-                    if (mute)
-                    {
+                } else {
+                    if (mute) {
                         return SuccessResponse(response, "Devices' mute changed successfully");
-                    }
-                    else
-                    {
+                    } else {
                         return SuccessResponse(response, "Devices' unmute changed successfully");
                     }
                 }
@@ -216,7 +167,6 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp)
         });
 }
 
-std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId)
-{
+std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId) {
     return deviceManager_.Get(deviceId);
 }
