@@ -28,7 +28,7 @@ struct DeviceNetworkInfo
 
 struct DeviceInfo
 {
-    
+    std::string id;
 };
 
 struct DeviceAddress

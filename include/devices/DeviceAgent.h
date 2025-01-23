@@ -10,6 +10,7 @@ public:
     DeviceAgent(const DeviceNetworkInfo& info, DeviceController* controller = nullptr);
     virtual ~DeviceAgent() = default;
     virtual bool GetInfo(DeviceInfo&) const override;
+    virtual std::string GetId() const override;
     virtual bool CheckSpeaker() override;
     virtual bool Reset() override;
     virtual bool SetLock(bool lock) override;

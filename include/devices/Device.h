@@ -20,6 +20,11 @@ public:
      * */ 
     virtual bool GetInfo(DeviceInfo&) const = 0;
     /**
+     * 获取设备ID
+     * @return 设备ID
+     * */
+    virtual std::string GetId() const = 0;
+    /**
      * 重置设备
      * @return true: 重置成功
      * */ 

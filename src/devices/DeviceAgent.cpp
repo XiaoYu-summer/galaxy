@@ -12,6 +12,15 @@ bool DeviceAgent::GetInfo(DeviceInfo& info) const
     return false;
 }
 
+std::string DeviceAgent::GetId() const
+{
+    DeviceInfo info_;
+    if (!GetInfo(info_)){
+        return "";
+    }
+    return info_.id;
+}
+
 bool DeviceAgent::CheckSpeaker()
 {
     return false;
