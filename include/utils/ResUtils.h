@@ -1,13 +1,14 @@
 #pragma once
-#include <crow.h>
 #include <Poco/File.h>
-#include <Poco/StreamCopier.h>
 #include <Poco/FileStream.h>
+#include <Poco/StreamCopier.h>
+#include <crow.h>
+
 #include "code/ErrorCode.h"
 #include "utils/JsonParamsParseHelper.h"
 
 inline void SuccessResponse(crow::response& response, const std::string& message,
-                            const crow::json::wvalue& data = crow::json::wvalue()) {
+    const crow::json::wvalue& data = crow::json::wvalue()) {
     crow::json::wvalue responseBody;
     responseBody["code"] = static_cast<int>(ErrorCode::SUCCESS);
     responseBody["message"] = message;
@@ -23,7 +24,7 @@ inline void SuccessResponse(crow::response& response, const std::string& message
 }
 
 inline void FailResponse(crow::response& response, ErrorCode errorCode, const std::string& message,
-                         const crow::json::wvalue& data = crow::json::wvalue()) {
+    const crow::json::wvalue& data = crow::json::wvalue()) {
     crow::json::wvalue responseBody;
     responseBody["code"] = static_cast<int>(errorCode);
     responseBody["message"] = message;
@@ -48,7 +49,7 @@ inline void FailResponse(crow::response& response, ErrorCode errorCode, const st
 }
 
 inline void ResponseWithFile(crow::response& response, const char* newFileName,
-                            const Poco::File& downloadedFile) {
+    const Poco::File& downloadedFile) {
     if (!downloadedFile.exists()) {
         return FailResponse(response, ErrorCode::FILE_NOT_FOUND, "\"" + downloadedFile.path() + "\" not found");
     }
@@ -61,16 +62,16 @@ inline void ResponseWithFile(crow::response& response, const char* newFileName,
     response.code = 200;
     response.set_header("Content-Type", "text/plain");
     char strBuffer[64];
-    std::snprintf(strBuffer, sizeof(strBuffer), "attachment; filename=\"%s\"",newFileName);
+    std::snprintf(strBuffer, sizeof(strBuffer), "attachment; filename=\"%s\"", newFileName);
     response.set_header("Content-Disposition", strBuffer);
     response.body = logContent.str();
     response.end();
 }
 
-inline auto HandleFileRetrievalReq = [](crow::response &response, const std::string& filepath, const auto &&handler) {
+inline auto HandleFileRetrievalReq = [](crow::response& response, const std::string& filepath, const auto&& handler) {
     Poco::File pocoFile(filepath);
     if (!pocoFile.exists()) {
-        return FailResponse(response, ErrorCode::FILE_NOT_FOUND,"\"" + filepath + "\" not found");
+        return FailResponse(response, ErrorCode::FILE_NOT_FOUND, "\"" + filepath + "\" not found");
     }
     if (!pocoFile.isFile()) {
         return FailResponse(response, ErrorCode::UNKNOWN_ERROR, "\"" + filepath + "\" is not a regular file");
