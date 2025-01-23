@@ -1,7 +1,6 @@
 #include "devices/DeviceManager.h"
 #include "devices/Device.h"
 #include "apiControllers/DevicesApiController.h"
-#include "utils/ResUtils.h"
 #include "DevicesApiParamsParseHelper.h"
 
 DeviceManager DevicesApiController::deviceManager_;
