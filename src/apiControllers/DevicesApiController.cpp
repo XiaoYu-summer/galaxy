@@ -5,12 +5,22 @@
 
 DeviceManager DevicesApiController::deviceManager_;
 
+static crow::json::wvalue DeviceInfoToBriefJson(const DeviceInfo& info) {
+    crow::json::wvalue json;
+    return json;
+}
+
+static crow::json::wvalue DeviceInfoToFullJson(const DeviceInfo& info) {
+    return DeviceInfoToBriefJson(info);
+}
+
+static void MuteDevicesRouteInternal(const std::unordered_map<std::string, std::shared_ptr<Device>>& devices, const bool mute, crow::response& response);
+
 DevicesApiController::DevicesApiController() {
 }
 
-static crow::json::wvalue DeviceInfoToJson(const DeviceInfo& info) {
-    crow::json::wvalue json;
-    return json;
+std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId) {
+    return deviceManager_.Get(deviceId);
 }
 
 void DevicesApiController::InitRoutes(CrowApp& crowApp) {
@@ -19,7 +29,7 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
             HandleDeviceGetReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
-                    crow::json::wvalue responseData({{"data", DeviceInfoToJson(info)}});
+                    crow::json::wvalue responseData({DeviceInfoToFullJson(info)});
                     return SuccessResponse(response, "Device's info is got successfully", responseData);
                 } else {
                     return FailResponse(response, ErrorCode::DEVICE_GETINFO_ERROR, "Device's info is got failed");
@@ -49,17 +59,6 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
             });
         });
 
-    CROW_ROUTE(crowApp, "/device/api/v1/reset")
-        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
-            HandleDevicePostReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
-                if (device->Reset()) {
-                    return SuccessResponse(response, "Device is reset successflly");
-                } else {
-                    return FailResponse(response, ErrorCode::DEVICE_RESET_ERROR, "Device reset failed");
-                }
-            });
-        });
-
     CROW_ROUTE(crowApp, "/device/api/v1/disconnect")
         .methods("POST"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReq(request, response, [](const std::shared_ptr<Device>& device, crow::response& response) {
@@ -72,7 +71,7 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
         });
 
     CROW_ROUTE(crowApp, "/device/api/v1/lock")
-        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
+        .methods("PUT"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicePostReqWithParams<bool>(request, "lock", response, [](const std::shared_ptr<Device>& device, const auto lock, crow::response& response) {
                 if (device->SetLock(lock)) {
                     if (lock) {
@@ -101,16 +100,29 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
             });
         });
 
-    CROW_ROUTE(crowApp, "/devices/api/v1/list/connected")
+    CROW_ROUTE(crowApp, "/devices/api/v1/list/connected/brief")
         .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
             for (const auto& device : deviceManager_.GetConnectingDevices()) {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
-                    devicesInfo.push_back(DeviceInfoToJson(info));
+                    devicesInfo.push_back(DeviceInfoToBriefJson(info));
                 }
             }
-            crow::json::wvalue responseData({{"data", devicesInfo}});
+            crow::json::wvalue responseData({devicesInfo});
+            return SuccessResponse(response, "Get connected devices successfully", responseData);
+        });
+
+    CROW_ROUTE(crowApp, "/devices/api/v1/list/connected/full")
+        .methods("GET"_method)([](const crow::request& request, crow::response& response) {
+            crow::json::wvalue::list devicesInfo;
+            for (const auto& device : deviceManager_.GetConnectingDevices()) {
+                DeviceInfo info;
+                if (device->GetInfo(info)) {
+                    devicesInfo.push_back(DeviceInfoToFullJson(info));
+                }
+            }
+            crow::json::wvalue responseData({devicesInfo});
             return SuccessResponse(response, "Get connected devices successfully", responseData);
         });
 
@@ -120,53 +132,66 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
             for (const auto& device : deviceManager_.GetActiveMicrophoneDevices()) {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
-                    devicesInfo.push_back(DeviceInfoToJson(info));
+                    devicesInfo.push_back(DeviceInfoToFullJson(info));
                 }
             }
-            crow::json::wvalue responseData({{"data", devicesInfo}});
+            crow::json::wvalue responseData({devicesInfo});
             return SuccessResponse(response, "Get Microphone-active devices is successfully", responseData);
         });
 
     CROW_ROUTE(crowApp, "/devices/api/v1/mute")
-        .methods("POST"_method)([](const crow::request& request, crow::response& response) {
+        .methods("PUT"_method)([](const crow::request& request, crow::response& response) {
             HandleDevicesPostReqWithParams<bool>(request, "mute", response, [](const std::unordered_map<std::string, std::shared_ptr<Device>>& devices, const auto mute, crow::response& response) {
-                crow::json::wvalue::list failDevices;
-                bool success = false;
-
-                for (const auto& item : devices) {
-                    const auto& deviceId = item.first;
-                    const auto& device = item.second;
-                    if (!device->SetMute(mute)) {
-                        failDevices.push_back(deviceId);
-                    } else {
-                        success = true;
-                    }
-                }
-
-                if (!success) {
-                    if (mute) {
-                        return FailResponse(response, ErrorCode::DEVICE_MUTE_ERROR, "Devices' mute failed", failDevices);
-                    } else {
-                        return FailResponse(response, ErrorCode::DEVICE_UNMUTE_ERROR, "Devices' unmute failed", failDevices);
-                    }
-                } else if (!failDevices.empty()) {
-                    crow::json::wvalue responseDate({{"failDevices", failDevices}});
-                    if (mute) {
-                        return SuccessResponse(response, "Devices' mute changed with wrong", responseDate);
-                    } else {
-                        return SuccessResponse(response, "Devices' unmute changed with wrong", responseDate);
-                    }
-                } else {
-                    if (mute) {
-                        return SuccessResponse(response, "Devices' mute changed successfully");
-                    } else {
-                        return SuccessResponse(response, "Devices' unmute changed successfully");
-                    }
-                }
+                return MuteDevicesRouteInternal(devices, mute, response);
             });
+        });
+
+    CROW_ROUTE(crowApp, "/devices/api/v1/mute/all")
+        .methods("PUT"_method)([](const crow::request& request, crow::response& response) {
+            HandleJsonReqWithParams<bool>(request, response, [](const bool mute, crow::response& response) {
+                std::unordered_map<std::string, std::shared_ptr<Device>> devices;
+                for (const auto& device : deviceManager_.GetConnectingDevices()) {
+                    devices.insert({device->GetId(), device});
+                }
+                return MuteDevicesRouteInternal(devices, mute, response);
+            },
+                "mute");
         });
 }
 
-std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId) {
-    return deviceManager_.Get(deviceId);
+static void MuteDevicesRouteInternal(const std::unordered_map<std::string, std::shared_ptr<Device>>& devices, const bool mute, crow::response& response) {
+    if (devices.empty()) {
+        return SuccessResponse(response, "There are no devices need to be muted or unmuted");
+    }
+
+    crow::json::wvalue::list failDevices;
+
+    for (const auto& item : devices) {
+        const auto& deviceId = item.first;
+        const auto& device = item.second;
+        if (!device->SetMute(mute)) {
+            failDevices.push_back(deviceId);
+        }
+    }
+
+    if (failDevices.empty()) {
+        if (mute) {
+            return SuccessResponse(response, "Devices' mute changed successfully");
+        } else {
+            return SuccessResponse(response, "Devices' unmute changed successfully");
+        }
+    } else if (failDevices.size() < devices.size()) {
+        crow::json::wvalue responseDate({{"failDevices", failDevices}});
+        if (mute) {
+            return FailResponse(response, ErrorCode::DEVICE_MUTE_ERROR, "Devices' mute changed with wrong", responseDate);
+        } else {
+            return FailResponse(response, ErrorCode::DEVICE_UNMUTE_ERROR, "Devices' unmute changed with wrong", responseDate);
+        }
+    } else {
+        if (mute) {
+            return FailResponse(response, ErrorCode::DEVICE_MUTE_ERROR, "Devices' mute failed");
+        } else {
+            return FailResponse(response, ErrorCode::DEVICE_UNMUTE_ERROR, "Devices' unmute failed");
+        }
+    }
 }
