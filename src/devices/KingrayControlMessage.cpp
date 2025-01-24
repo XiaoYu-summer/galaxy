@@ -90,6 +90,72 @@ void McuNetInfoSetRequestMsg::SerializeBody(Binary::Pack& pack)
     pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
 }
 
+void DeviceMarkRequestMsg::SerializeBody(Binary::Pack& pack)
+{
+    // 消息体大小，这里以 action_、deviceType_ 和 deviceCode_ 的总字节数作为数据长度
+    const uint32_t dataLen = sizeof(action_) + sizeof(deviceType_) + sizeof(deviceCode_);
+    pack << dataLen;
+    const auto bodySize = pack.size();
+    // 消息体
+    pack << action_ << deviceType_ << deviceCode_;
+    // 计算校验和
+    pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
+}
+
+void MicIdTypeGetRequestMsg::SerializeBody(Binary::Pack& pack)
+{
+    // 消息体大小，这里以 deviceType_ 和 reserve_ 数组的总字节数作为数据长度
+    const uint32_t dataLen = sizeof(deviceType_) + sizeof(reserve_);
+    pack << dataLen;
+    const auto bodySize = pack.size();
+
+    // 消息体
+    pack << deviceType_;
+    for (int i = 0; i < sizeof(reserve_) / sizeof(reserve_[0]); ++i) {
+        pack << reserve_[i];
+    }
+
+    // 计算校验和
+    pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
+}
+
+void MicIdTypeGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
+{
+    uint32_t checksum = 0;
+    uint32_t dataLen = 0;
+
+    // 读取数据长度
+    unpack >> dataLen;
+
+    // 获取数据指针
+    const uint32_t* dataPtr = reinterpret_cast<const uint32_t*>(unpack.data());
+
+    // 计算校验和
+    uint32_t sum = CalculateChecksum(dataLen, dataPtr);
+
+    // 读取 deviceType_
+    unpack >> deviceType_;
+    deviceType_*=4;
+
+    const uint16_t idTypeInfoCount = (dataLen - sizeof(uint8_t) - sizeof(deviceType_)) / sizeof(IdTypeInfo);
+
+    idTypeInfoVec_.clear();
+
+    // 读取每个 IdTypeInfo 结构体
+    for (uint16_t i = 0; i < idTypeInfoCount; ++i) {
+        IdTypeInfo idTypeInfo;
+        unpack >> idTypeInfo.deviceCode_;
+        unpack >> idTypeInfo.idType_;
+        idTypeInfoVec_.push_back(idTypeInfo);
+    }
+
+    // 读取校验和
+    unpack >> checksum;
+
+    // 验证检验和
+    VerifyChecksum(sum, checksum);
+}
+
 void DeviceNameGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
 {
     uint32_t checksum = 0;
