@@ -20,7 +20,7 @@ DevicesApiController::DevicesApiController() {
 }
 
 std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId) {
-    return deviceManager_.Get(deviceId);
+    return deviceManager_->Get(deviceId);
 }
 
 void DevicesApiController::InitRoutes(CrowApp& crowApp) {
@@ -117,7 +117,7 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
     CROW_ROUTE(crowApp, "/devices/api/v1/list/connected/full")
         .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
-            for (const auto& device : deviceManager_.GetConnectingDevices()) {
+            for (const auto& device : deviceManager_->GetConnectingDevices()) {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
                     devicesInfo.push_back(DeviceInfoToFullJson(info));
@@ -152,7 +152,7 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
         .methods("PUT"_method)([](const crow::request& request, crow::response& response) {
             HandleJsonReqWithParams<bool>(request, response, [](const bool mute, crow::response& response) {
                 std::unordered_map<std::string, std::shared_ptr<Device>> devices;
-                for (const auto& device : deviceManager_.GetConnectingDevices()) {
+                for (const auto& device : deviceManager_->GetConnectingDevices()) {
                     devices.insert({device->GetId(), device});
                 }
                 return MuteDevicesRouteInternal(devices, mute, response);
@@ -201,9 +201,4 @@ static void MuteDevicesRouteInternal(const std::unordered_map<std::string, std::
 void DevicesApiController::InitDeviceManager()
 {
     deviceManager_->Init();
-}
-
-std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId)
-{
-    return deviceManager_->Get(deviceId);
 }
