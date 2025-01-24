@@ -11,6 +11,12 @@
 void PassportApiController::InitRoutes(CrowApp& app) {
     InitAdminRoutes(app);
     InitClientRoutes(app);
+
+    CROW_ROUTE(app, "/passport/api/v1/generate-pairing-code")
+        .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
+            crow::json::wvalue responseData({{"pairingCode", "pairingCode"}});
+            return SuccessResponse(response, "Generate pairing code success", responseData);
+        });
 }
 
 void PassportApiController::InitAdminRoutes(CrowApp& app){
@@ -72,5 +78,19 @@ void PassportApiController::InitAdminRoutes(CrowApp& app){
 }
 
 void PassportApiController::InitClientRoutes(CrowApp& app){
+    CROW_ROUTE(app, "/passport/api/v1/client/pairing")
+        .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
+            HandleJsonReqWithParams<std::string>(request, response,
+                [](const std::string& pairingCode,crow::response& response){
+                    return SuccessResponse(response, "pairing success");
+                }, "pairingCode");
+        });
 
+    CROW_ROUTE(app, "/passport/api/v1/client/uppairing")
+        .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
+            HandleJsonReqWithParams<std::string>(request, response,
+                [](const std::string& pairingCode,crow::response& response){
+                    return SuccessResponse(response, "uppairing success");
+                }, "pairingCode");
+        });
 }
