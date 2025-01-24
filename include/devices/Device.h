@@ -10,12 +10,19 @@ class Device
 {
 private:
     Device(const DeviceNetworkInfo& info);
-    Device(DeviceController* controller);
-
+    Device(const std::shared_ptr<Device>&);
+    Device(Device&)=delete;
+    Device(Device&&)=delete;
+    Device(const Device&)=delete;
+    Device(const Device&&)=delete;
+    Device& operator=(Device)=delete;
+    Device& operator=(Device&)=delete;
+    Device& operator=(Device&&)=delete;
+    Device& operator=(const Device&)=delete;
+    Device& operator=(const Device&&)=delete;
 public:
-    static std::shared_ptr<Device> CreateDevice(const DeviceNetworkInfo& info, DeviceController* controller = nullptr);
+    static std::shared_ptr<Device> CreateDevice(const DeviceNetworkInfo& info);
 
-    Device() = default;
     ~Device() = default;
     /**
      * 获取设备信息

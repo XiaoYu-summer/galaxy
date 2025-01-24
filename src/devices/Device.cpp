@@ -6,17 +6,15 @@ Device::Device(const DeviceNetworkInfo& info)
     : controller_(DeviceController::CreateDeviceController(info))
 {}
 
-Device::Device(DeviceController* controller)
-    : controller_(controller)
-{}
+Device::Device(const std::shared_ptr<Device>&device)
+    : controller_(device->controller_)
+{
+}
 
-std::shared_ptr<Device> Device::CreateDevice(const DeviceNetworkInfo& info, DeviceController* controller)
+std::shared_ptr<Device> Device::CreateDevice(const DeviceNetworkInfo& info)
 {
     std::shared_ptr<Device> device;
-    if (controller)
-        device.reset(new Device(controller));
-    else
-        device.reset(new Device(info));
+    device.reset(new Device(info));
     return device;
 }
 
