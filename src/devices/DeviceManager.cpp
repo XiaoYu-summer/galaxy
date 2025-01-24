@@ -8,21 +8,42 @@ DEFINE_FILE_NAME("DeviceManager.cpp")
 DeviceManager::DeviceManager()
     : logger_(Poco::Logger::get("DeviceManager"))
 {
-    Init();
+    LOG_I("construct device manager...");
 }
 
 void DeviceManager::Init()
 {
+    LOG_I("Init...");
+
    // 创建设备发现任务
+   if (!kingrayDiscoveryProcessor_)
+   {
+        kingrayDiscoveryProcessor_.reset(new DeviceDiscoveryProcessor(DeviceVendor::KINGRAY));
+   }
+   if (kingrayDiscoveryProcessor_)
+   {
+        kingrayDiscoveryProcessor_->InitProcessor(std::dynamic_pointer_cast<DeviceDiscoveryObserver>(shared_from_this()));
+   }
+   if (!digisynDiscoveryProcessor_)
+   {
+        digisynDiscoveryProcessor_.reset(new DeviceDiscoveryProcessor(DeviceVendor::DIGISYN));
+   }
+   if (digisynDiscoveryProcessor_)
+   {
+        digisynDiscoveryProcessor_->InitProcessor(std::dynamic_pointer_cast<DeviceDiscoveryObserver>(shared_from_this()));
+   }
 }
 
 std::shared_ptr<Device> DeviceManager::Get(const std::string& deviceId) const
 {
     std::shared_ptr<Device> device = nullptr;
-    auto it = devices_.find(deviceId);
-    if (it != devices_.end())
     {
-        device = it->second;
+        Poco::ScopedLock<Poco::FastMutex> lock(devicesMutex_);
+        auto it = devices_.find(deviceId);
+        if (it != devices_.end())
+        {
+            device = it->second;
+        }
     }
     return device;
 }
@@ -52,6 +73,8 @@ std::vector<std::shared_ptr<Device>> DeviceManager::GetActiveMicrophoneDevices()
 
 void DeviceManager::AddDevice(const DeviceNetworkInfo& info)
 {
+    LOG_INFO_THIS("add device deviceId=" << info.deviceId);
+    Poco::ScopedLock<Poco::FastMutex> lock(devicesMutex_);
     if (!devices_.count(info.deviceId))
     {
         std::shared_ptr<Device> device = Device::CreateDevice(info);
@@ -59,16 +82,28 @@ void DeviceManager::AddDevice(const DeviceNetworkInfo& info)
     }
     else
     {
-        LOG_WARNING_THIS("device is exist! deviceId=" << info.deviceId << ", deviceType=" << (int)info.deviceType);
+        LOG_DEBUG_THIS("device is exist! deviceId=" << info.deviceId << ", deviceType=" << (int)info.deviceType);
     }
 }
 
-void DeviceManager::DelDevice(const std::string& deviceId)
+void DeviceManager::DeleteDevice(const std::string& deviceId)
 {
-
+    LOG_INFO_THIS("delete device deviceId=" << deviceId);
+    Poco::ScopedLock<Poco::FastMutex> lock(devicesMutex_);
+    if (0 != devices_.count(deviceId))
+    {
+        devices_.erase(deviceId);
+    }
 }
 
 void DeviceManager::OnUpdateDeviceStatus(const DeviceNetworkInfo& info, bool onLine)
 {
-
+    if (onLine)
+    {
+        AddDevice(info);
+    }
+    else
+    {
+        DeleteDevice(info.deviceId);
+    }
 }

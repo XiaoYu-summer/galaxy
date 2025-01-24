@@ -3,7 +3,12 @@
 
 DEFINE_FILE_NAME("KingrayControlMessage.cpp")
 
-CommonMessage::CommonMessage() : logger_(Poco::Logger::get("KingrayControlMessage")) {}
+CommonMessage::CommonMessage(uint16_t functionCode)
+    : messageHeader_({PROTOCOL_HEADER, 0, 0, functionCode})
+    , logger_(Poco::Logger::get("KingrayControlMessage"))
+{
+
+}
 
 bool CommonMessage::Serialize(Binary::Pack& pack)
 {
@@ -64,7 +69,7 @@ void McuNetInfoGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
     Binary::ReadArray(unpack, netInfo_.ip_, sizeof(netInfo_.ip_));
     Binary::ReadArray(unpack, netInfo_.mask_, sizeof(netInfo_.mask_));
     Binary::ReadArray(unpack, netInfo_.gw_, sizeof(netInfo_.gw_));
-    unpack >> netInfo_.dhcpMode_ >> netInfo_.unused1 >> netInfo_.unused2 >> netInfo_.unused3 >> checksum;
+    unpack >> netInfo_.dhcpMode_ >> netInfo_.reserve_  >> checksum;
     // 验证检验和
     VerifyChecksum(sum, checksum);
 }
@@ -80,7 +85,7 @@ void McuNetInfoSetRequestMsg::SerializeBody(Binary::Pack& pack)
     WriteArray(pack, netInfo_.ip_, sizeof(netInfo_.ip_));
     WriteArray(pack, netInfo_.mask_, sizeof(netInfo_.mask_));
     WriteArray(pack, netInfo_.gw_, sizeof(netInfo_.gw_));
-    pack << netInfo_.dhcpMode_ << netInfo_.unused1 << netInfo_.unused2 << netInfo_.unused3;
+    pack << netInfo_.dhcpMode_ << netInfo_.reserve_;
     // 计算校验和
     pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
 }

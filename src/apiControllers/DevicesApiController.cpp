@@ -3,7 +3,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 
-DeviceManager DevicesApiController::deviceManager_;
+std::shared_ptr<DeviceManager> DevicesApiController::deviceManager_ = std::make_shared<DeviceManager>();
 
 static crow::json::wvalue DeviceInfoToBriefJson(const DeviceInfo& info) {
     crow::json::wvalue json;
@@ -103,7 +103,8 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
     CROW_ROUTE(crowApp, "/devices/api/v1/list/connected/brief")
         .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
-            for (const auto& device : deviceManager_.GetConnectingDevices()) {
+            for (const auto& device : deviceManager_->GetConnectingDevices())
+            {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
                     devicesInfo.push_back(DeviceInfoToBriefJson(info));
@@ -129,7 +130,8 @@ void DevicesApiController::InitRoutes(CrowApp& crowApp) {
     CROW_ROUTE(crowApp, "/devices/api/v1/list/active-microphone")
         .methods("GET"_method)([](const crow::request& request, crow::response& response) {
             crow::json::wvalue::list devicesInfo;
-            for (const auto& device : deviceManager_.GetActiveMicrophoneDevices()) {
+            for (const auto& device : deviceManager_->GetActiveMicrophoneDevices())
+            {
                 DeviceInfo info;
                 if (device->GetInfo(info)) {
                     devicesInfo.push_back(DeviceInfoToFullJson(info));
@@ -194,4 +196,14 @@ static void MuteDevicesRouteInternal(const std::unordered_map<std::string, std::
             return FailResponse(response, ErrorCode::DEVICE_UNMUTE_ERROR, "Devices' unmute failed");
         }
     }
+}
+
+void DevicesApiController::InitDeviceManager()
+{
+    deviceManager_->Init();
+}
+
+std::shared_ptr<Device> DevicesApiController::GetDevice(const std::string& deviceId)
+{
+    return deviceManager_->Get(deviceId);
 }

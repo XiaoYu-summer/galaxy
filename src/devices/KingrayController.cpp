@@ -24,18 +24,14 @@ void KingrayController::InitTransport()
 
 std::string KingrayController::GetFunctionCode(const std::vector<uint8_t>& response) const
 {
-    Binary::Unpack unpack(response.data(), response.size());
-    CommonMessage message;
-    message.Deserialize(unpack);
-
-    return GetFunctionCodeStr(message.messageHeader_.functionCode_);
+    const auto functionCode = GetFunctionCodeByData(response);
+    return GetFunctionCodeStr(functionCode);
 }
 
 std::string KingrayController::GetDeviceName(const std::string& deviceId) const
 {
     Binary::Pack pack;
     DeviceNameGetRequestMsg request;
-    request.messageHeader_.functionCode_ = (uint16_t)FunctionCode::PL_FUN_DEVICE_NAME_GET;
     const auto serializeResult = request.Serialize(pack);
     if (transport_ && serializeResult)
     {
@@ -44,7 +40,6 @@ std::string KingrayController::GetDeviceName(const std::string& deviceId) const
         Binary::Unpack unpack(response.data(), response.size());
 
         DeviceNameGetResponseMsg responseMsg;
-        responseMsg.messageHeader_.functionCode_ = (uint16_t)FunctionCode::PL_FUN_DEVICE_NAME_GET;
         responseMsg.DeserializeBody(unpack);
         return responseMsg.name_;
         

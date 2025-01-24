@@ -23,8 +23,11 @@ else()
     add_library(jr_aoip ${AOIP_SOURCES} ${AOIP_PUB_HEADERS} ${AOIP_PRI_HEADERS})
 endif()
 
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(Poco REQUIRED COMPONENTS Foundation Util)
+
 target_link_libraries(jr_aoip Poco::Foundation)
+target_link_libraries(jr_aoip Boost::system)
 
 # 设置库的包含目录
 target_include_directories(jr_aoip

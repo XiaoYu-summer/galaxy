@@ -5,8 +5,8 @@
 
 
 class DigisynController : public DeviceController
-                       , public aoip::UdpCallback
-                       , public std::enable_shared_from_this<DigisynController>
+                        , public aoip::UdpCallback
+                        , public std::enable_shared_from_this<DigisynController>
 {
 public:
     DigisynController(const DeviceNetworkInfo& info);

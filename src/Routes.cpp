@@ -19,4 +19,5 @@ void SetupRoutes(CrowApp& app) {
     PassportApiController::InitRoutes(app);
     DevicesApiController::InitRoutes(app);
     CameraApiController::InitRoutes(app);
+    DevicesApiController::InitDeviceManager();
 };

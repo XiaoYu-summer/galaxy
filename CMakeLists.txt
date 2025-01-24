@@ -92,7 +92,6 @@ find_package(Boost REQUIRED thread system filesystem)
 find_package(Crow REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(nlohmann_json REQUIRED)
-find_package(spdlog REQUIRED)
 find_package(LibArchive REQUIRED)
 find_package(Poco REQUIRED COMPONENTS Foundation Util)
 
@@ -106,7 +105,6 @@ target_link_libraries(galaxy
         OpenSSL::SSL 
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
-        spdlog::spdlog
         LibArchive::LibArchive
         $<BUILD_INTERFACE:jr_aoip>
         $<BUILD_INTERFACE:mh_mdns>

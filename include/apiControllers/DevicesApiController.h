@@ -10,6 +10,7 @@ public:
     DevicesApiController();
     ~DevicesApiController() = default;
     static void InitRoutes(CrowApp& app);
+    static void InitDeviceManager();
     /**
      * Retrieves a device by its ID.
      * @param deviceId The device's identifier.
@@ -17,5 +18,5 @@ public:
      */
     static std::shared_ptr<Device> GetDevice(const std::string& deviceId);
 private:
-    static DeviceManager deviceManager_;
+    static std::shared_ptr<DeviceManager> deviceManager_;
 };
