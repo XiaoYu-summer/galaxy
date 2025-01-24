@@ -51,6 +51,11 @@ std::shared_ptr<Device> DeviceManager::Get(const std::string& deviceId) const
 std::vector<std::shared_ptr<Device>> DeviceManager::DevicesFilter(const std::function<bool(const std::shared_ptr<Device>&)>& predicate) const
 {
     std::vector<std::shared_ptr<Device>> devices;
+<<<<<<< Updated upstream
+=======
+    Poco::ScopedLock<Poco::FastMutex> lock(devicesMutex_);
+    for (const auto& item : devices_)
+>>>>>>> Stashed changes
     {
         Poco::ScopedLock<Poco::FastMutex> lock(devicesMutex_);
         for (const auto& item : devices_)

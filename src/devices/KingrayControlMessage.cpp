@@ -156,7 +156,7 @@ void MicIdTypeGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
     VerifyChecksum(sum, checksum);
 }
 
-void DeviceNameGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
+void SingleDeviceNameGetResponseMsg::DeserializeBody(const Binary::Unpack& unpack)
 {
     uint32_t checksum = 0;
     uint32_t dataLen = 0;

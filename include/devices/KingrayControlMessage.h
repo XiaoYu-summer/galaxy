@@ -58,7 +58,7 @@ enum class FunctionCode : uint16_t
     PL_FUN_ALL_DEV_ONLINE_GET              = 0x0153,    // 获取在线状态(全部无线主机/有线MIC/无线MIC/POE音箱)
     PL_FUN_ALL_DEV_CHN_CFG_GET             = 0x0154,    // 获取通道配置(全部主控主机/无线主机/有线MIC/无线MIC/POE音箱)
     PL_FUN_SINGLE_DEV_CHN_CFG_SET          = 0x0155,    // 设置单一设备通道配置
-    PL_FUN_DEVICE_NAME_GET                 = 0x020B,    // 设备名称获取
+    PL_FUN_SINGLE_DEVICE_NAME_GET          = 0x020B,    // 获取单一设备名称
     PL_FUN_UNKNOW
 };
 
@@ -68,7 +68,6 @@ const std::map<std::string, FunctionCode> FUNCTION_CODE_MAP =
     std::pair<std::string, FunctionCode>("PL_FUN_NETINFO_GET",                     FunctionCode::PL_FUN_NETINFO_GET),
     std::pair<std::string, FunctionCode>("PL_FUN_NETINFO_SET",                     FunctionCode::PL_FUN_NETINFO_SET),
     std::pair<std::string, FunctionCode>("PL_FUN_DEVICE_MARK",                     FunctionCode::PL_FUN_DEVICE_MARK),
-    std::pair<std::string, FunctionCode>("PL_FUN_DEVICE_NAME_GET",                 FunctionCode::PL_FUN_DEVICE_NAME_GET),
     std::pair<std::string, FunctionCode>("PL_FUN_AUDIO_CONFIG_GET",                FunctionCode::PL_FUN_AUDIO_CONFIG_GET),               
     std::pair<std::string, FunctionCode>("PL_FUN_AUDIO_CONFIG_SET",                FunctionCode::PL_FUN_AUDIO_CONFIG_SET),               
     std::pair<std::string, FunctionCode>("PL_FUN_STARTUP_PRESET_SET",              FunctionCode::PL_FUN_STARTUP_PRESET_SET),            
@@ -92,7 +91,7 @@ const std::map<std::string, FunctionCode> FUNCTION_CODE_MAP =
     std::pair<std::string, FunctionCode>("PL_FUN_CODE_REASSIGN_SET",               FunctionCode::PL_FUN_CODE_REASSIGN_SET),              
     std::pair<std::string, FunctionCode>("PL_FUN_RST_FACT_SET",                    FunctionCode::PL_FUN_RST_FACT_SET),                   
     std::pair<std::string, FunctionCode>("PL_FUN_WL_HOST_INFO_GET",                FunctionCode::PL_FUN_WL_HOST_INFO_GET),               
-    std::pair<std::string, FunctionCode>("PL_FUN_AES_MDL_INFO_GET",               FunctionCode::PL_FUN_AES_MDL_INFO_GET),              
+    std::pair<std::string, FunctionCode>("PL_FUN_AES_MDL_INFO_GET",                FunctionCode::PL_FUN_AES_MDL_INFO_GET),              
     std::pair<std::string, FunctionCode>("PL_FUN_MEETING_DEV_CODE_GET",            FunctionCode::PL_FUN_MEETING_DEV_CODE_GET),           
     std::pair<std::string, FunctionCode>("PL_FUN_SINGLE_DEV_CODE_SET",             FunctionCode::PL_FUN_SINGLE_DEV_CODE_SET),            
     std::pair<std::string, FunctionCode>("PL_FUN_WL_HOST_NAME_GET",                FunctionCode::PL_FUN_WL_HOST_NAME_GET),               
@@ -114,7 +113,7 @@ const std::map<std::string, FunctionCode> FUNCTION_CODE_MAP =
     std::pair<std::string, FunctionCode>("PL_FUN_ALL_DEV_ONLINE_GET",              FunctionCode::PL_FUN_ALL_DEV_ONLINE_GET),             
     std::pair<std::string, FunctionCode>("PL_FUN_ALL_DEV_CHN_CFG_GET",             FunctionCode::PL_FUN_ALL_DEV_CHN_CFG_GET),            
     std::pair<std::string, FunctionCode>("PL_FUN_SINGLE_DEV_CHN_CFG_SET",          FunctionCode::PL_FUN_SINGLE_DEV_CHN_CFG_SET),         
-    std::pair<std::string, FunctionCode>("PL_FUN_DEVICE_NAME_GET",                 FunctionCode::PL_FUN_DEVICE_NAME_GET)                
+    std::pair<std::string, FunctionCode>("PL_FUN_SINGLE_DEVICE_NAME_GET",          FunctionCode::PL_FUN_SINGLE_DEVICE_NAME_GET)                
 };
 
 enum class ResponseCode : uint32_t
@@ -156,6 +155,12 @@ struct NetworkInfo
     uint8_t gw_[4]    = {0};
     uint8_t dhcpMode_ = 0;
     uint8_t reserve_  = 0;
+};
+// 设备类型基础信息
+struct DeviceTypeBaseInfo
+{
+    uint8_t deviceType_ = 0;
+    uint8_t reserve_[3] = {0};
 };
 
 // 计算校验和
@@ -267,9 +272,13 @@ public:
     {
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
+    struct PresetInfo
+    {
+        uint32_t savePresetCode_ = 0;   // 保存存档号
+        uint8_t  presetName_[20] = {0}; // 存档名称（不超过20字节）
+    };
 
-    uint32_t    savePresetCode_  = 0;  // 保存存档号
-    std::string presetName_;           // 存档名称（不超过20字节）
+    PresetInfo presetInfo_;
 };
 
 // 存档调用请求消息
@@ -363,9 +372,13 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  action_     = 0;   // 0：停止， 1：开始
-    uint8_t  deviceType_ = 0;   // 设备类型
-    uint16_t deviceCode_ = 0;   // 设备编码
+    struct DeviceMark
+    {
+        uint8_t  action_     = 0;   // 0：停止， 1：开始
+        uint8_t  deviceType_ = 0;   // 设备类型
+        uint16_t deviceCode_ = 0;   // 设备编码
+    };
+    DeviceMark deviceMark_;
 };
 
 // 获取群组编码请求消息
@@ -398,8 +411,12 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  groupCode_[2] = {0};  // 群组编码
-    uint16_t reserve_      = 0;    // 保留
+    struct GroupInfo
+    {
+        uint8_t  groupCode_[2] = {0};  // 群组编码
+        uint16_t reserve_      = 0;    // 保留
+    };
+    GroupInfo groupInfo_;
 };
 
 // 获取会议参数请求消息
@@ -434,10 +451,14 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t meetingMode_    = 0;  // 会议模式
-    uint8_t wlMicSpeechMax_ = 0;  // 无线麦克最大发言数
-    uint8_t wdMicSpeechMax_ = 0;  // 有线麦克最大发言数
-    uint8_t reserve_        = 0;  // 保留
+    struct MeetingParam
+    {
+        uint8_t meetingMode_    = 0;  // 会议模式
+        uint8_t wlMicSpeechMax_ = 0;  // 无线麦克最大发言数
+        uint8_t wdMicSpeechMax_ = 0;  // 有线麦克最大发言数
+        uint8_t reserve_        = 0;  // 保留
+    };
+    MeetingParam meetingParam_;
 };
 
 // 设置无线MIC对频请求消息
@@ -450,8 +471,12 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t action_     = 0;    // 1: 发起对频，0：停止对频
-    uint8_t reserve_[3] = {0};  // 保留
+    struct FreqAllowInfo
+    {
+        uint8_t action_     = 0;    // 1: 发起对频，0：停止对频
+        uint8_t reserve_[3] = {0};  // 保留
+    };
+    FreqAllowInfo freqAllowInfo_;
 };
 
 // 获取配对模式请求消息
@@ -485,9 +510,13 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  deviceType_ = 0;  // 设备类型
-    uint8_t  pairMode_   = 0;  // 0：自动配对，1：手动配对
-    uint16_t reserve_    = 0;  // 保留
+    struct PairModeInfo
+    {
+        uint8_t  deviceType_ = 0;  // 设备类型
+        uint8_t  pairMode_   = 0;  // 0：自动配对，1：手动配对
+        uint16_t reserve_    = 0;  // 保留
+    };
+    PairModeInfo pairModeInfo_;
 };
 
 // 手动配对设置请求消息
@@ -500,9 +529,13 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  deviceType_ = 0;  // 设备类型
-    uint8_t  action_     = 0;  // 1：发起配对，0：停止配对
-    uint16_t reserve_    = 0;  // 保留
+    struct ManualPairingInfo
+    {
+        uint8_t  deviceType_ = 0;  // 设备类型
+        uint8_t  action_     = 0;  // 1：发起配对，0：停止配对
+        uint16_t reserve_    = 0;  // 保留
+    };
+    ManualPairingInfo manualPairingInfo_;
 };
 
 // 移除设备请求消息
@@ -515,9 +548,13 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  deviceType_ = 0;  // 设备类型
-    uint8_t  reserve_    = 0;  // 保留
-    uint16_t deviceCode_ = 0;  // 设备编码
+    struct DeviceCodeInfo
+    {
+        uint8_t  deviceType_ = 0;  // 设备类型
+        uint8_t  reserve_    = 0;  // 保留
+        uint16_t deviceCode_ = 0;  // 设备编码  
+    };
+    DeviceCodeInfo deviceCodeInfo_;
 };
 
 // 编码ID重新排序
@@ -530,8 +567,7 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t deviceType_ = 0;    // 设备类型
-    uint8_t reserve_[3] = {0};  // 保留
+    DeviceTypeBaseInfo deviceTypeInfo_;
 };
 
 // 恢复出厂设置
@@ -544,8 +580,7 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t deviceType_ = 0;    // 设备类型
-    uint8_t reserve_[3] = {0};  // 保留
+    DeviceTypeBaseInfo deviceTypeInfo_;
 };
 
 // 获取无线主机信息请求消息
@@ -580,8 +615,7 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t deviceType_ = 0;    // 设备类型
-    uint8_t reserve_[3] = {0};  // 保留
+    DeviceTypeBaseInfo deviceTypeInfo_;
 };
 
 // 获取 全部主控主机/无线主机/有线MIC/POE音箱AES模块信息 响应消息
@@ -611,8 +645,7 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t deviceType_ = 0;    // 设备类型
-    uint8_t reserve_[3] = {0};  // 保留
+    DeviceTypeBaseInfo deviceTypeInfo_;
 };
 
 // 获取 全部会议设备编码 响应消息
@@ -643,13 +676,17 @@ public:
 
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t  deviceType_ = 0;    // 设备类型
-    uint8_t  reserve_    = 0;    // 保留
-    uint8_t  mac_[6]     = {0};  // mac地址
-    uint16_t code_       = 0;    // 设备编码
+    struct SingleDeviceCodeInfo
+    {
+        uint8_t  deviceType_ = 0;    // 设备类型
+        uint8_t  reserve_    = 0;    // 保留
+        uint8_t  mac_[6]     = {0};  // mac地址
+        uint16_t code_       = 0;    // 设备编码
+    };
+    SingleDeviceCodeInfo singleDeviceCodeInfo_;
 };
 
-// 无线主机名称获取请求消息
+// 获取无线主机名称请求消息
 class WlHostNameGetRequestMsg : public CommonMessage
 {
 public:
@@ -659,7 +696,7 @@ public:
     }
 };
 
-// 无线主机名称获取响应消息
+// 获取无线主机名称响应消息
 class WlHostNameGetResponseMsg : public CommonMessage
 {
 public:
@@ -668,7 +705,7 @@ public:
     std::string name_;  // 无线主机名称（不超过64字节）
 };
 
-// MIC身份类别获取请求消息
+// 获取MIC身份类别请求消息
 class MicIdTypeGetRequestMsg : public CommonMessage
 {
 public:
@@ -678,11 +715,10 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    uint8_t deviceType_ = 0;    // 设备类型
-    uint8_t reserve_[3] = {0};  // 保留
+    DeviceTypeBaseInfo deviceTypeInfo_;
 };
 
-// MIC身份类别获取响应消息
+// 获取MIC身份类别响应消息
 class MicIdTypeGetResponseMsg : public CommonMessage
 {
 public:
@@ -697,21 +733,1229 @@ public:
     std::vector<IdTypeInfo> idTypeInfoVec_;
 };
 
-// 设备名称获取请求消息
-class DeviceNameGetRequestMsg : public CommonMessage
+// 设置单一MIC身份类别请求消息
+class SingleMicIdTypeSetRequestMsg : public CommonMessage
 {
 public:
-    DeviceNameGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_DEVICE_NAME_GET))
+    SingleMicIdTypeSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_MIC_ID_TYPE_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleMicIdTypeInfo
+    {
+        uint8_t  deviceType_ = 0;  // 设备类型
+        uint8_t  reserve_    = 0;  // 保留
+        uint16_t deviceCode_ = 0;  // 设备编码
+        uint16_t idType_     = 0;  // 身份类别，0：普通用户，1：VIP，2：主席
+    };
+    SingleMicIdTypeInfo singleMicIdTypeInfo_;
+};
+
+// 获取全部无线MIC电量请求消息
+class AllWlMicBteryLvlGetRequestMsg : public CommonMessage
+{
+public:
+    AllWlMicBteryLvlGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_WL_MIC_BTERY_LVL_GET))
         : CommonMessage(functionCode)
     {
     }
 };
 
-// 设备名称获取响应消息
-class DeviceNameGetResponseMsg : public CommonMessage
+// 获取全部无线MIC电量响应消息
+class AllWlMicBteryLvlGetResponseMsg : public CommonMessage
 {
 public:
     virtual void DeserializeBody(const Binary::Unpack& unpack) override;
 
-    std::string name_;
+    uint16_t deviceCode_ = 201; // 设备编码
+    uint16_t bteryLvl    = 100; // 电池电量
+};
+
+// 获取音量状态请求消息(全部有线MIC/无线MIC/POE音箱)
+class AllMicSpeakerVolGetRequestMsg : public CommonMessage
+{
+public:
+    AllMicSpeakerVolGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_MIC_SPEAKER_VOL_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取音量状态响应消息(全部有线MIC/无线MIC/POE音箱)
+class AllMicSpeakerVolGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct VolumeInfo
+    {
+        uint16_t deviceCode_ = 0; // 设备编码
+        uint8_t  mute_       = 0; // 0：UNMUTE，1：MUTE
+        uint8_t  reserve_    = 0;
+        uint16_t volume_     = 0; // 音量
+    };
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<VolumeInfo> volumeInfoVec_;
+};
+
+// 设置单一设备音量状态请求消息
+class SingleDevVolSetRequestMsg : public CommonMessage
+{
+public:
+    SingleDevVolSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_DEV_VOL_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleDevVolumeInfo
+    {
+        uint8_t  deviceType_ = 0;  // 设备类型
+        uint8_t  reserve0_   = 0;  // 保留
+        uint16_t deviceCode_ = 0;  // 设备编码
+        uint8_t  mute_       = 0;  // 0：UNMUTE，1：MUTE
+        uint8_t  reserve1_   = 0;
+        uint16_t volume_     = 0;  // 音量
+    };
+    SingleDevVolumeInfo singleDevVolumeInfo_;
+};
+
+// 获取版本信息请求消息(全部有线MIC/无线MIC/POE音箱)
+class AllMicSpeakerVerGetRequestMsg : public CommonMessage
+{
+public:
+    AllMicSpeakerVerGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_MIC_SPEAKER_VER_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取版本信息响应消息(全部有线MIC/无线MIC/POE音箱)
+class AllMicSpeakerVerGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct VersionInfo
+    {
+        uint16_t deviceCode_   = 0;   // 设备编码
+        int8_t   fwVersion_[3] = {0}; // 固件版本
+        uint8_t  hwVersion_[3] = {0}; // 硬件版本
+    };
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<VersionInfo> versionInfoVec_;
+};
+
+// 获取会议设备时钟状态请求消息
+class MeetingDevClockStatusGetRequestMsg : public CommonMessage
+{
+public:
+    MeetingDevClockStatusGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_MEETING_DEV_CLK_STA_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取会议设备时钟状态响应消息
+class MeetingDevClockStatusGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct ClockInfo
+    {
+        uint16_t              deviceCode_     = 1; // 设备编码
+        int8_t                sync_           = 0; // 是否同步，0：未同步，1：已同步
+        uint8_t               mute_           = 0; // 是否静音，0：未静音，1：静音
+        uint8_t               clockSrc_       = 0; // 时钟源，0：DANTE，1：其他
+        uint8_t               domain_         = 0; // 域，0：Master，1：Slave
+        uint8_t               preClock_       = 0; // 是否首选时钟，0：非首选，1：首选
+        uint8_t               syncToExternal_ = 0; // 是否启用外部时钟，0：不启用，1：启用
+        std::vector<uint32_t> multicastVec_;       // 主网组播，最大为32个地址
+    };
+
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<ClockInfo> clockInfoVec_;
+};
+
+// 设置单一设备时钟状态请求消息
+class SingleDevClockStatusSetRequestMsg : public CommonMessage
+{
+public:
+    SingleDevClockStatusSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_DEV_CLK_STA_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleDevClockStatusInfo
+    {
+        uint8_t  deviceType_     = 0;  // 设备类型
+        uint8_t  reserve_        = 0;  // 保留
+        uint16_t deviceCode_     = 1;  // 设备编码
+        uint8_t  preClock_       = 0;  // 是否首选时钟，0：非首选，1：首选
+        uint8_t  syncToExternal_ = 0;  // 是否启用外部时钟，0：不启用，1：启用
+    };
+    SingleDevClockStatusInfo singleDevClockStatusInfo_;
+};
+
+// 获取会议设备网络状态请求消息
+class MeetingDevNetStatusGetRequestMsg : public CommonMessage
+{
+public:
+    MeetingDevNetStatusGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_MEETING_DEV_NET_STA_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取会议设备网络状态响应消息
+class MeetingDevNetStatusGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct NetInfo
+    {
+        uint16_t deviceCode_      = 1; // 设备编码
+        uint8_t  subscribe_       = 0; // 是否订阅，0：未订阅，1：已订阅
+        uint8_t  mainNetStatus_   = 0; // 主DANTE网口连接速率
+        uint8_t  sendBandwidth_   = 0; // 发送瞬时带宽
+        uint8_t  rcvBandwidth_    = 0; // 接收瞬时带宽
+        uint8_t  delaySetResult_  = 0; // 延 时设置结果，0：OK，1：FAIL
+        uint8_t  delayStatus_     = 0; // 延 时状态
+        uint8_t  packetLossStatus = 0; // 丢包状态
+    };
+
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<NetInfo> netInfoVec_;
+};
+
+// 设置单一设备网络状态请求消息
+class SingleDevNetStatusSetRequestMsg : public CommonMessage
+{
+public:
+    SingleDevNetStatusSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_DEV_NET_STA_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleDevNetStatusInfo
+    {
+        uint8_t  deviceType_ = 0;    // 设备类型
+        uint8_t  reserve_    = 0;    // 保留
+        uint16_t deviceCode_ = 1;    // 设备编码
+        uint16_t delaySet_   = 3000; // AES模块延时设置([1000 - 10000])
+    };
+    SingleDevNetStatusInfo singleDevNetStatusInfo_;
+};
+
+// 获取会议设备事件状态请求消息
+class MeetingDevEventStatusGetRequestMsg : public CommonMessage
+{
+public:
+    MeetingDevEventStatusGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_MEETING_DEV_EVENT_STA_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取会议设备事件状态响应消息
+class MeetingDevEventStatusGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct EventInfo
+    {
+        uint16_t deviceCode_   = 1;   // 设备编码
+        uint16_t timeStampY_   = 0;   // 年
+        uint8_t  timeStampM_   = 0;   // 月
+        uint8_t  timeStampD_   = 0;   // 日
+        uint8_t  timeStampH_   = 0;   // 时
+        uint8_t  timeStampMin_ = 0;   // 分
+        uint8_t  timeStampS_   = 0;   // 秒
+        uint8_t  reserved0_    = 0;   // 保留
+        uint16_t timeStampMs_  = 0;   // 毫秒
+        uint8_t  eventType_    = 0;   // 事件类型
+        uint8_t  reserved1_    = 0;   // 保留
+    };
+
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<EventInfo> eventInfoVec_;
+};
+
+// 获取细分类别请求消息(全部无线MIC/有线MIC/POE音箱)
+class AllWlWdSpeakerTypeGetRequestMsg : public CommonMessage
+{
+public:
+    AllWlWdSpeakerTypeGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_WL_WD_MIC_SPEAKER_TYPE_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取细分类别响应消息(全部无线MIC/有线MIC/POE音箱)
+class AllWlWdSpeakerTypeGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct DetailInfo
+    {
+        uint16_t deviceCode_ = 1;   // 设备编码
+        uint16_t detailType_ = 0;   // 2：无线MIC-手持，3：无线MIC-坐式，4：无线MIC-主席，5：有线MIC，6：有线MIC-主席，7：音柱，8：吸顶音箱
+    };
+
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<DetailInfo> detailInfoVec_;
+};
+
+// 获取全部设备名称请求消息
+class AllMicSpeakerDevNameGetRequestMsg : public CommonMessage
+{
+public:
+    AllMicSpeakerDevNameGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_MIC_SPEAKER_DEV_NAME_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取全部设备名称响应消息
+class AllMicSpeakerDevNameResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct NameInfo
+    {
+        uint16_t    deviceCode_; // 设备编码
+        std::string name_;       // 设备名称，不超过24字节
+    };
+    
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<NameInfo> nameInfoVec_;
+};
+
+// 设置单一设备名称请求消息（有线MIC/无线MIC/POE音箱）
+class SingleMicSpeakerDevNameSetRequestMsg : public CommonMessage
+{
+public:
+    SingleMicSpeakerDevNameSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_MIC_SPEAKER_DEV_NAME_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleMicSpeakerDevNameInfo
+    {
+        uint8_t     deviceType_ = 0;   // 设备类型
+        uint8_t     reserve_    = 0;   // 保留
+        uint16_t    deviceCode_ = 1;   // 设备编码
+        uint8_t     name_[24]   = {0}; // 设备名称，不超过24字节
+    };
+    SingleMicSpeakerDevNameInfo singleMicSpeakerDevNameInfo_;
+};
+
+// 获取全部设备在线状态请求消息(全部无线主机/有线MIC/无线MIC/POE音箱)
+class AllDeviceOnlineGetRequestMsg : public CommonMessage
+{
+public:
+    AllDeviceOnlineGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_DEV_ONLINE_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取全部设备在线状态响应消息(全部无线主机/有线MIC/无线MIC/POE音箱)
+class AllDeviceOnlineResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct OnlineInfo
+    {
+        uint16_t deviceCode_; // 设备编码
+        uint8_t  online_;     // 0：离线，1：在线
+        uint8_t  reserve_;
+    };
+    
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<OnlineInfo> onlineInfoVec_;
+};
+
+// 获取全部设备通道配置请求消息(全部主控主机/无线主机/有线MIC/无线MIC/POE音箱)
+class AllDeviceChannelConfigGetRequestMsg : public CommonMessage
+{
+public:
+    AllDeviceChannelConfigGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_ALL_DEV_CHN_CFG_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    DeviceTypeBaseInfo deviceTypeInfo_;
+};
+
+// 获取全部设备通道配置响应消息(全部主控主机/无线主机/有线MIC/无线MIC/POE音箱)
+class AllDeviceChannelConfigResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    struct ChannelInfo
+    {
+        uint16_t deviceCode_;     // 设备编码
+        uint8_t  recvChannelNum_; // 接收通道数
+        uint8_t  sendChannelNum_; // 发送通道数
+    };
+    
+    uint8_t deviceType_ = 0;    // 设备类型
+    uint8_t reserve_    = 0;
+    std::vector<ChannelInfo> channelInfoVec_;
+};
+
+// 设置单一设备通道配置请求消息
+/*
+    对于主控主机，最大为32；
+    对于无线主机，最大为0；
+    对于有线MIC，最大为0；
+    对于POE音箱，最大为1
+*/
+class SingleDevChannelConfigSetRequestMsg : public CommonMessage
+{
+public:
+    SingleDevChannelConfigSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_DEV_CHN_CFG_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct SingleDevChannelConfigInfo
+    {
+        uint8_t  deviceType_     = 0;   // 设备类型
+        uint8_t  reserve_        = 0;   // 保留
+        uint16_t deviceCode_     = 1;   // 设备编码
+        uint8_t  recvChannelNum_ = 0;   // 接收通道数 [0-32]
+        uint8_t  sendChannelNum_ = 0;   // 发送通道数 [0-32]
+    };
+    SingleDevChannelConfigInfo singleDevChannelConfigInfo_;
+};
+
+// 获取单一设备名称请求消息
+class SingleDeviceNameGetRequestMsg : public CommonMessage
+{
+public:
+    SingleDeviceNameGetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_SINGLE_DEVICE_NAME_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+};
+
+// 获取单一设备名称响应消息
+class SingleDeviceNameGetResponseMsg : public CommonMessage
+{
+public:
+    virtual void DeserializeBody(const Binary::Unpack& unpack) override;
+
+    std::string name_;  // 设备名称，不超过24字节
+};
+
+/********************************************音频设置消息********************************************************/
+// 最大音频输入、输出通道个数
+#define MAX_AUDIO_CHANNEL_IN_COUNT    38
+#define MAX_AUDIO_CHANNEL_OUT_COUNT   30
+
+// 参量均衡 5段、10段、15段通道个数 
+#define PARAMETRIC_EQ_5_BANDS_CHANNEL_COUNT     32
+#define PARAMETRIC_EQ_10_BANDS_CHANNEL_COUNT    MAX_AUDIO_CHANNEL_OUT_COUNT
+#define PARAMETRIC_EQ_15_BANDS_CHANNEL_COUNT    (MAX_AUDIO_CHANNEL_IN_COUNT - PARAMETRIC_EQ_5_BANDS_CHANNEL_COUNT)
+
+// 增益通道索引起始值
+#define GAIN_APPLY_TO_IN_AND_OUT_INDEX_START               1
+// 参量均衡通道索引起始值
+#define PEQ_APPLY_TO_IN_AND_OUT_INDEX_START                (GAIN_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 高通滤波通道索引起始值
+#define HPF_APPLY_TO_IN_AND_OUT_INDEX_START                (PEQ_APPLY_TO_IN_AND_OUT_INDEX_START + PARAMETRIC_EQ_5_BANDS_CHANNEL_COUNT * 5 + PARAMETRIC_EQ_10_BANDS_CHANNEL_COUNT * 10 + PARAMETRIC_EQ_15_BANDS_CHANNEL_COUNT * 15)
+// 低通滤波通道索引起始值
+#define LPF_APPLY_TO_IN_AND_OUT_INDEX_START                (HPF_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 噪声门通道索引起始值
+#define NG_APPLY_TO_IN_INDEX_START                         (LPF_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 噪声门旁通通道索引起始值
+#define NG_BPS_APPLY_TO_IN_INDEX_START                     (NG_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 反馈抑制等级通道索引起始值
+#define FE_LEVEL_APPLY_TO_IN_INDEX_START                   (NG_BPS_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 反馈抑制旁通通道索引起始值
+#define FE_BPS_APPLY_TO_IN_INDEX_START                     (FE_LEVEL_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 自动增益通道索引起始值
+#define AGC_APPLY_TO_IN_INDEX_START                        (FE_BPS_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 自动增益旁通通道索引起始值
+#define AGC_BPS_APPLY_TO_IN_INDEX_START                    (AGC_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 输入模式通道索引起始值
+#define INPUT_MODE_APPLY_TO_IN_INDEX_START                 (AGC_BPS_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 模拟输入控制通道索引起始值 
+#define ANALOG_INPUT_APPLY_TO_IN_INDEX_START               (INPUT_MODE_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 延时通道索引起始值
+#define DELAY_APPLY_TO_IN_AND_OUT_INDEX_START              (ANALOG_INPUT_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 压缩器通道索引起始值
+#define COMP_APPLY_TO_OUT_INDEX_START                      (DELAY_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 压缩器旁通通道索引起始值
+#define COMP_BPS_APPLY_TO_OUT_INDEX_START                  (COMP_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 限幅器通道索引起始值
+#define LIMIT_APPLY_TO_OUT_INDEX_START                     (COMP_BPS_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 限幅器旁通通道索引起始值
+#define LIMIT_BPS_APPLY_TO_OUT_INDEX_START                 (LIMIT_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 混音掩码通道索引起始值
+#define MIXER_MASK_APPLY_TO_OUT_INDEX_START                (LIMIT_BPS_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 自动混音输出通道索引起始值
+#define AUTO_MIX_OUT_APPLY_TO_OUT_INDEX_START              (MIXER_MASK_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 回声消除输出通道索引起始值
+#define AEC_OUT_APPLY_TO_OUT_INDEX_START                   (AUTO_MIX_OUT_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 噪声消除输出通道索引起始值
+#define ANS_OUT_APPLY_TO_OUT_INDEX_START                   (AEC_OUT_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 自动混音输入设置通道索引起始值
+#define AUTO_MIX_IN_SET_APPLY_TO_IN_INDEX_START            (ANS_OUT_APPLY_TO_OUT_INDEX_START + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 自动混音输出设置通道索引起始值
+#define AUTO_MIX_OUT_SET_INDEX_START                       (AUTO_MIX_IN_SET_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 回声消除通道设置通道索引起始值
+#define AEC_CHANNEL_SET_APPLY_TO_IN_INDEX_START            (AUTO_MIX_OUT_SET_APPLY_TO_IN_INDEX_START + 1)
+#define AEC_CHANNEL_SET_APPLY_TO_AUTO_MIX_OUT_INDEX_START  (AEC_CHANNEL_SET_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 回声消除等级设置通道索引起始值
+#define AEC_LEVEL_SET_INDEX_START                          (AEC_CHANNEL_SET_APPLY_TO_AUTO_MIX_OUT_INDEX_START + 1)
+// 噪声消除通道设置通道索引起始值
+#define ANS_CHANNEL_SET_APPLY_TO_IN_INDEX_START            (AEC_LEVEL_SET_INDEX_START + 1)
+#define ANS_CHANNEL_SET_APPLY_TO_AUTO_MIX_OUT_INDEX_START  (ANS_CHANNEL_SET_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+#define ANS_CHANNEL_SET_APPLY_TO_AEC_OUT_INDEX_START       (ANS_CHANNEL_SET_APPLY_TO_AUTO_MIX_OUT_INDEX_START + 1)
+// 噪声消除等级设置通道索引起始值
+#define ANS_LEVEL_SET_INDEX_START                          (ANS_CHANNEL_SET_APPLY_TO_AEC_OUT_INDEX_START + 1)
+// 正弦波通道索引起始值
+#define SINE_WAVE_INDEX_START                              (ANS_LEVEL_SET_INDEX_START + 1)
+// 粉红噪声通道索引起始值
+#define PINK_NOISE_INDEX_START                             (SINE_WAVE_INDEX_START + 1)
+// 白噪声通道索引起始值
+#define WHITE_NOISE_INDEX_START                            (PINK_NOISE_INDEX_START + 1)
+// 通道名称设置通道索引起始值
+#define CHANNEL_NAME_SET_APPLY_TO_IN_AND_OUT_INDEX_START   (WHITE_NOISE_INDEX_START + 1)
+// 语音跟踪功能设置通道索引起始值
+#define CAM_FUN_SET_INDEX_START                            (CHANNEL_NAME_SET_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// 语音跟踪通道(Mic)设置通道索引起始值
+#define CAM_CHANNEL_SET_APPLY_TO_IN_INDEX_START            (CAM_FUN_SET_INDEX_START + 1)
+#define CAM_CHANNEL_SET_APPLY_TO_VIRTUAL_INDEX_START       (CAM_CHANNEL_SET_APPLY_TO_IN_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT)
+// 语音跟踪通讯串口(波特率)设置通道索引起始值
+#define CAM_COM_BAUD_SET_APPLY_TO_RS232_INDEX_START        (CAM_CHANNEL_SET_APPLY_TO_VIRTUAL_INDEX_START + 4)
+#define CAM_COM_BAUD_SET_APPLY_TO_RS485_INDEX_START        (CAM_COM_BAUD_SET_APPLY_TO_RS232_INDEX_START + 1)
+// 存档保护设置通道索引起始值
+#define PRESET_LOCK_SET_INDEX_START                        (CAM_COM_BAUD_SET_APPLY_TO_RS485_INDEX_START + 1)
+// EQ通道全旁通通道索引起始值
+#define CHANNEL_EQ_BYPASS_APPLY_TO_IN_AND_OUT_INDEX_START  (PRESET_LOCK_SET_INDEX_START + 1)
+// 通道音量限制通道索引起始值
+#define GAIN_LIMIT_APPLY_TO_IN_AND_OUT_INDEX_START         (CHANNEL_EQ_BYPASS_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// AI噪声消除参数设置通道索引起始值
+#define AI_ANS_SET_INDEX_START                             (GAIN_LIMIT_APPLY_TO_IN_AND_OUT_INDEX_START + MAX_AUDIO_CHANNEL_IN_COUNT + MAX_AUDIO_CHANNEL_OUT_COUNT)
+// AI反馈抑制参数设置通道索引起始值
+#define AI_AFC_SET_INDEX_START                             (AI_ANS_SET_INDEX_START + 1)
+// 总音量通道索引起始值
+#define GAIN_GLOBAL_OUT_INDEX_START                        (AI_AFC_SET_INDEX_START + 1)
+// 电平读取通道索引起始值
+#define UV_READ_APPLY_TO_IN_AND_OUT_INDEX_START            (GAIN_GLOBAL_OUT_INDEX_START + 1)
+// 压限器增益读取通道索引起始值
+#define CONTROL_GAIN_READ_APPLY_TO_OUT_INDEX_START         (UV_READ_APPLY_TO_IN_AND_OUT_INDEX_START + 1)
+
+
+// 滤波器信息
+struct AudioFilterInfo
+{
+    uint32_t presetCode_ = 0;   // 存档号
+    uint32_t index_      = 1;   // 模块索引
+    float    frequency_  = 10;  // 频率 HZ
+    uint8_t  filterType_ = 0;   // 滤波器类型
+    uint8_t  bypass_     = 1;   // 旁通：1开，0关
+    uint8_t  reserve_[2] = {0}; // 保留
+};
+class AudioChannel
+{
+public:
+    virtual ~AudioChannel() = default;
+
+    virtual int32_t GetAudioChannelInIndex(int32_t channelId = 0)
+    {
+        if (channelId < MAX_AUDIO_CHANNEL_IN_COUNT)
+        {
+            return channelIn_[channelId];
+        }
+        return -1;
+    }
+
+    virtual int32_t GetAudioChannelOutIndex(int32_t channelId = 0)
+    {
+        if (channelId < MAX_AUDIO_CHANNEL_OUT_COUNT)
+        {
+            return channelOut_[channelId];
+        }
+        return -1;
+    }
+
+    std::array<uint32_t, MAX_AUDIO_CHANNEL_IN_COUNT> channelIn_;
+    std::array<uint32_t, MAX_AUDIO_CHANNEL_OUT_COUNT> channelOut_;
+};
+
+// 设置增益请求消息
+class AudioGainSetRequestMsg : public CommonMessage
+                             , public AudioChannel
+{
+public:
+    AudioGainSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = GAIN_APPLY_TO_IN_AND_OUT_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+    struct AudioGainInfo
+    {
+        uint32_t presetCode_ = 0;  // 存档号
+        uint32_t index_      = 1;  // 模块索引
+        float    gain_       = 0;  // 增益
+        uint8_t  mute_       = 0;  // 静音：1开，0关
+        uint8_t  phase_      = 1;  // 相位：1正，0负
+    };
+    AudioGainInfo gainInfo_;
+};
+
+// 设置参量均衡请求消息
+
+
+// 设置高通滤波请求消息
+class AudioHighPassFilterSetRequestMsg : public CommonMessage
+                                       , public AudioChannel
+{
+public:
+    AudioHighPassFilterSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = HPF_APPLY_TO_IN_AND_OUT_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+    
+    AudioFilterInfo highPassFilterInfo_;
+};
+
+// 设置低通滤波请求消息
+class AudioLowPassFilterSetRequestMsg : public CommonMessage
+                                      , public AudioChannel
+{
+public:
+    AudioLowPassFilterSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = LPF_APPLY_TO_IN_AND_OUT_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+    
+    AudioFilterInfo lowPassFilterInfo_;
+};
+
+// 设置噪声门请求消息
+class AudioNoiseGateSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioNoiseGateSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = NG_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct AudioNoiseGateInfo
+    {
+        float    threshold_ = -120; // 阈值
+        float    ratio_     = 100;  // 压缩比（协议保留，UI不显示）
+        uint32_t holdMs_    = 0;    // 保持时间（单位ms，协议保留，UI不显示）
+        uint32_t attackMs_  = 45;   // 启动时间（单位ms）
+        uint32_t releaseMs_ = 724;  // 释放时间（单位ms）
+        uint32_t knee_      = 0;    // 平滑度，拐点（协议保留，UI不显示）
+    };
+    
+    AudioNoiseGateInfo audioNoiseGateInfo_;
+};
+
+// 设置噪声门旁通请求消息
+class AudioNoiseGateBypassSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioNoiseGateBypassSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = NG_BPS_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t bypass_ = 1;  // 旁通：1开，0关
+};
+
+// 设置反馈抑制（Feedback Exterminator）等级请求消息
+class AudioFELevelSetRequestMsg : public CommonMessage
+                                , public AudioChannel
+{
+public:
+    AudioFELevelSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = FE_LEVEL_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t level_ = 2;  // 等级：1(3Hz)，2(6Hz)
+};
+
+// 设置反馈抑制（Feedback Exterminator）旁通请求消息
+class AudioFEBypassSetRequestMsg : public CommonMessage
+                                 , public AudioChannel
+{
+public:
+    AudioFEBypassSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = FE_BPS_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t bypass_ = 1;  // 旁通：1开，0关
+};
+
+// 设置自动增益请求消息
+class AudioAGCSetRequestMsg : public CommonMessage
+                            , public AudioChannel
+{
+public:
+    AudioAGCSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = AGC_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct AGCInfo
+    {
+        float    attackThreshold_ = 21;  // 启控阈值
+        float    targetThreshold_ = 21;  // 目标阈值
+        uint32_t ratio_           = 0;   // 比率
+        uint32_t attackMs_        = 45;  // 启控时间（单位ms）
+        uint32_t releaseMs_       = 724; // 释放时间（单位ms）
+    };
+    
+    AGCInfo info_;
+};
+
+// 设置自动增益旁通请求消息
+class AudioAGCBypassSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioAGCBypassSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = AGC_BPS_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t bypass_ = 1;  // 旁通：1开，0关
+};
+
+// 设置输入模式请求消息
+class AudioInputModeSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioInputModeSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = INPUT_MODE_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t mode_;
+};
+
+// 设置模拟输入控制请求消息
+class AudioAnalogInputSetRequestMsg : public CommonMessage
+                                    , public AudioChannel
+{
+public:
+    AudioAnalogInputSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = ANALOG_INPUT_APPLY_TO_IN_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct InputInfo
+    {
+        uint16_t inputSrc_         = 1;  // 输入源 1：line，0：mic
+        uint16_t sensitivityLevel_ = 0;  // 灵敏度级别 [0，40]dB
+        uint32_t switchOn48V_      = 0;  // 0 关, 1开
+    };
+    
+    InputInfo inputInfo_;
+};
+
+// 设置延时请求消息
+class AudioDelaySetRequestMsg : public CommonMessage
+                              , public AudioChannel
+{
+public:
+    AudioDelaySetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = DELAY_APPLY_TO_IN_AND_OUT_INDEX_START;
+        for (auto& channelIn : channelIn_)
+        {
+            channelIn = i++;
+        }
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct DelayInfo
+    {
+        float   timeMs_     = 0;   // 延时 ms
+        uint8_t bypass_     = 0;   // 旁通：1开，0关
+        uint8_t reserve_[3] = {0}; // 保留
+    };
+    
+    DelayInfo delayInfo_;
+};
+
+// 设置压缩器请求消息
+class AudioCompressorSetRequestMsg : public CommonMessage
+                                   , public AudioChannel
+{
+public:
+    AudioCompressorSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = COMP_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct CompressorInfo
+    {
+        float    threshold_ = 21;   // 阈值
+        float    ratio_     = 1;    // 压缩比（协议保留，UI不显示）
+        uint32_t holdMs_    = 0;    // 保持时间（单位ms，协议保留，UI不显示）
+        uint32_t attackMs_  = 45;   // 启动时间（单位ms）
+        uint32_t releaseMs_ = 724;  // 释放时间（单位ms）
+        uint32_t knee_      = 0;    // 平滑度，拐点
+    };
+    
+    CompressorInfo compressorInfo_;
+};
+
+// 设置压缩器请求消息
+class AudioCompressorBypssSetRequestMsg : public CommonMessage
+                                        , public AudioChannel
+{
+public:
+    AudioCompressorBypssSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = COMP_BPS_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t bypass_; // 旁通：1开，0关
+};
+
+// 设置限幅器请求消息
+class AudioLimiterSetRequestMsg : public CommonMessage
+                                , public AudioChannel
+{
+public:
+    AudioLimiterSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = LIMIT_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct LimiterrInfo
+    {
+        float    threshold_ = 21;   // 阈值
+        float    ratio_     = 1;    // 压缩比（协议保留，UI不显示）
+        uint32_t holdMs_    = 0;    // 保持时间（单位ms，协议保留，UI不显示）
+        uint32_t releaseMs_ = 724;  // 释放时间（单位ms）
+        uint32_t knee_      = 0;    // 平滑度，拐点（协议保留，UI不显示）
+    };
+    
+    LimiterrInfo limiterInfo_;
+};
+
+// 设置压缩器旁通请求消息
+class AudioLimiterBypassSetRequestMsg : public CommonMessage
+                                      , public AudioChannel
+{
+public:
+    AudioLimiterBypassSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = LIMIT_BPS_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint32_t bypass_; // 旁通：1开，0关
+};
+
+// 设置混音掩码请求消息
+/*
+    从低到高，每个bit对应一个输入通道是否静音，如bit0对应输入通道In1和输出的静音状态，0表示取消静音（接通），1表示静音（断开）。
+    注意：输入只有38个通道，实际64bit只用到前38bit 
+*/
+class AudioMixerMaskSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioMixerMaskSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = MIXER_MASK_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+
+        std::fill(mark_, mark_ + 8, 0xFF);
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    uint8_t mark_[8]; // 0表示取消静音（接通），1表示静音（断开）
+};
+
+// 设置混音器自动混音输出通道请求消息
+class AudioMixerAutoMixOutSetRequestMsg : public CommonMessage
+                                        , public AudioChannel
+{
+public:
+    AudioMixerAutoMixOutSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = AUTO_MIX_OUT_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct MixOutInfo
+    {
+        float   gain_       = 0;   // 增益
+        uint8_t mute_       = 1;   // 静音：1开，0关
+        uint8_t phase_      = 1;   // 相位：1正，0负
+        uint8_t reserve_[2] = {0}; // 保留
+
+    };
+    MixOutInfo mixOutInfo_;
+};
+
+// 设置混音器AEC输出通道请求消息
+class AudioMixerAecOutSetRequestMsg : public CommonMessage
+                                    , public AudioChannel
+{
+public:
+    AudioMixerAecOutSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = AEC_OUT_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct MixAecOutInfo
+    {
+        float   gain_       = 0;   // 增益
+        uint8_t mute_       = 1;   // 静音：1开，0关
+        uint8_t phase_      = 1;   // 相位：1正，0负
+        uint8_t reserve_[2] = {0}; // 保留
+
+    };
+    MixAecOutInfo mixerAecOutInfo_;
+};
+
+// 设置混音器ANS输出通道请求消息
+class AudioMixerAnsOutSetRequestMsg : public CommonMessage
+                                    , public AudioChannel
+{
+public:
+    AudioMixerAnsOutSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = ANS_OUT_APPLY_TO_OUT_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct MixerAnsOutInfo
+    {
+        float   gain_       = 0;   // 增益
+        uint8_t mute_       = 1;   // 静音：1开，0关
+        uint8_t phase_      = 1;   // 相位：1正，0负
+        uint8_t reserve_[2] = {0}; // 保留
+
+    };
+    MixerAnsOutInfo mixerAnsOutInfo_;
+};
+
+// 设置自动混音输入通道请求消息
+class AudioAutoMixInSetRequestMsg : public CommonMessage
+                                  , public AudioChannel
+{
+public:
+    AudioAutoMixInSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+        InitAudioChannelIndex();
+    }
+    void InitAudioChannelIndex()
+    {
+        uint32_t i = AUTO_MIX_IN_SET_APPLY_TO_IN_INDEX_START;
+        for (auto& channelOut : channelOut_)
+        {
+            channelOut = i++;
+        }
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct AutoMixInfo
+    {
+        uint8_t  auto_        = 0;   // 增益
+        uint8_t  mute_        = 1;   // 静音：1开，0关
+        uint16_t priority_    = 1;   // 相位：1正，0负
+        float    channelGain_ = {0}; // 保留
+
+    };
+    AutoMixInfo autoMixInfo_;
+};
+
+// 设置自动混音输出通道请求消息
+class AudioAutoMixOutSetRequestMsg : public CommonMessage
+                                   , public AudioChannel
+{
+public:
+    AudioAutoMixOutSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_AUDIO_CONFIG_SET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual int32_t GetAudioChannelOutIndex(int32_t channelId = 0) override
+    {
+        return AUTO_MIX_OUT_SET_INDEX_START;
+    }
+    virtual void SerializeBody(Binary::Pack& pack) override;
+
+    struct AutoMixOutInfo
+    {
+        float    slope           = 1; // 斜率
+        float    outGain_        = 0; // 输出增益
+        uint32_t responseTimeMS_ = 5; // 响应时间
+    };
+    AutoMixOutInfo autoMixOutInfo_;
 };

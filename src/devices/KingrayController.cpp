@@ -31,7 +31,7 @@ std::string KingrayController::GetFunctionCode(const std::vector<uint8_t>& respo
 std::string KingrayController::GetDeviceName(const std::string& deviceId) const
 {
     Binary::Pack pack;
-    DeviceNameGetRequestMsg request;
+    SingleDeviceNameGetRequestMsg request;
     const auto serializeResult = request.Serialize(pack);
     if (transport_ && serializeResult)
     {
@@ -39,7 +39,7 @@ std::string KingrayController::GetDeviceName(const std::string& deviceId) const
         std::vector<uint8_t> response = future.get();
         Binary::Unpack unpack(response.data(), response.size());
 
-        DeviceNameGetResponseMsg responseMsg;
+        SingleDeviceNameGetResponseMsg responseMsg;
         responseMsg.DeserializeBody(unpack);
         return responseMsg.name_;
         
