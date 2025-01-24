@@ -9,6 +9,11 @@
 #include "utils/ResUtils.h"
 
 void PassportApiController::InitRoutes(CrowApp& app) {
+    InitAdminRoutes(app);
+    InitClientRoutes(app);
+}
+
+void PassportApiController::InitAdminRoutes(CrowApp& app){
     CROW_ROUTE(app, "/passport/api/v1/token")
         .methods("POST"_method)([&app](const crow::request& request, crow::response& response) {
             auto requestBody = crow::json::load(request.body);
@@ -76,4 +81,8 @@ void PassportApiController::InitRoutes(CrowApp& app) {
             session.remove("expireTime");
             return SuccessResponse(response, "Logged out successfully");
         });
+}
+
+void PassportApiController::InitClientRoutes(CrowApp& app){
+
 }
