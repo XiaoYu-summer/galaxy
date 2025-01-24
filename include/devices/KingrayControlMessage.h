@@ -185,8 +185,8 @@ class CommonMessage
 public:
     CommonMessage(uint16_t functionCode = 0);
     virtual ~CommonMessage() = default;
-    virtual bool Serialize(Binary::Pack& pack);
-    virtual bool Deserialize(const Binary::Unpack& unpack);
+    bool Serialize(Binary::Pack& pack);
+    bool Deserialize(const Binary::Unpack& unpack);
     virtual void SerializeBody(Binary::Pack& pack) {}
     virtual void DeserializeBody(const Binary::Unpack& unpack) {}
 
