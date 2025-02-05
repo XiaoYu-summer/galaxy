@@ -93,11 +93,11 @@ void McuNetInfoSetRequestMsg::SerializeBody(Binary::Pack& pack)
 void DeviceMarkRequestMsg::SerializeBody(Binary::Pack& pack)
 {
     // 消息体大小，这里以 action_、deviceType_ 和 deviceCode_ 的总字节数作为数据长度
-    const uint32_t dataLen = sizeof(action_) + sizeof(deviceType_) + sizeof(deviceCode_);
+    const uint32_t dataLen = sizeof(deviceMark_) / sizeof(uint32_t);
     pack << dataLen;
     const auto bodySize = pack.size();
     // 消息体
-    pack << action_ << deviceType_ << deviceCode_;
+    pack << deviceMark_.action_ << deviceMark_.deviceType_ << deviceMark_.deviceCode_;
     // 计算校验和
     pack << CalculateChecksum(dataLen, reinterpret_cast<const uint32_t*>(pack.data() + bodySize));
 }
@@ -105,14 +105,14 @@ void DeviceMarkRequestMsg::SerializeBody(Binary::Pack& pack)
 void MicIdTypeGetRequestMsg::SerializeBody(Binary::Pack& pack)
 {
     // 消息体大小，这里以 deviceType_ 和 reserve_ 数组的总字节数作为数据长度
-    const uint32_t dataLen = sizeof(deviceType_) + sizeof(reserve_);
+    const uint32_t dataLen = sizeof(deviceTypeInfo_) / sizeof(uint32_t);
     pack << dataLen;
     const auto bodySize = pack.size();
 
     // 消息体
-    pack << deviceType_;
-    for (int i = 0; i < sizeof(reserve_) / sizeof(reserve_[0]); ++i) {
-        pack << reserve_[i];
+    pack << deviceTypeInfo_.deviceType_;
+    for (int i = 0; i < sizeof(deviceTypeInfo_.reserve_) / sizeof(deviceTypeInfo_.reserve_[0]); ++i) {
+        pack << deviceTypeInfo_.reserve_[i];
     }
 
     // 计算校验和
