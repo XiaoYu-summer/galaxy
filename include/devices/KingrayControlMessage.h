@@ -391,14 +391,19 @@ public:
     }
 };
 
+struct GroupInfo
+{
+    uint8_t  groupCode_[2] = {0};  // 群组编码
+    uint16_t reserve_      = 0;    // 保留
+};
+
 // 获取群组编码响应消息
 class GroupCodeGetResponseMsg : public CommonMessage
 {
 public:
     virtual void DeserializeBody(const Binary::Unpack& pack) override;
 
-    uint8_t  groupCode_[2] = {0};  // 群组编码
-    uint16_t reserve_      = 0;    // 保留
+    GroupInfo groupInfo_;
 };
 
 // 设置群组编码请求消息
@@ -411,11 +416,6 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    struct GroupInfo
-    {
-        uint8_t  groupCode_[2] = {0};  // 群组编码
-        uint16_t reserve_      = 0;    // 保留
-    };
     GroupInfo groupInfo_;
 };
 
@@ -429,16 +429,25 @@ public:
     }
 };
 
-// 获取会议参数响应消息
-class MeetingParamGetResponsetMsg : public CommonMessage
+struct MeetingParam
 {
-public:
-    virtual void DeserializeBody(const Binary::Unpack& pack) override;
-
     uint8_t meetingMode_    = 0;  // 会议模式
     uint8_t wlMicSpeechMax_ = 0;  // 无线麦克最大发言数
     uint8_t wdMicSpeechMax_ = 0;  // 有线麦克最大发言数
     uint8_t reserve_        = 0;  // 保留
+};
+
+// 获取会议参数响应消息
+class MeetingParamGetResponsetMsg : public CommonMessage
+{
+public:
+    MeetingParamGetResponsetMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_MEETING_PARAM_GET))
+        : CommonMessage(functionCode)
+    {
+    }
+    virtual void DeserializeBody(const Binary::Unpack& pack) override;
+
+    MeetingParam meetingParam_;
 };
 
 // 设置会议参数请求消息
@@ -451,13 +460,6 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    struct MeetingParam
-    {
-        uint8_t meetingMode_    = 0;  // 会议模式
-        uint8_t wlMicSpeechMax_ = 0;  // 无线麦克最大发言数
-        uint8_t wdMicSpeechMax_ = 0;  // 有线麦克最大发言数
-        uint8_t reserve_        = 0;  // 保留
-    };
     MeetingParam meetingParam_;
 };
 
@@ -489,15 +491,25 @@ public:
     }
 };
 
+
+struct PairModeInfo
+{
+    uint8_t  deviceType_ = 0;  // 设备类型
+    uint8_t  pairMode_   = 0;  // 0：自动配对，1：手动配对
+    uint16_t reserve_    = 0;  // 保留
+};
+
 // 获取配对模式响应消息
 class PairModeGetResponseMsg : public CommonMessage
 {
 public:
+    PairModeSetRequestMsg(uint16_t functionCode = static_cast<uint16_t>(FunctionCode::PL_FUN_PAIR_MODE_SET))
+        : CommonMessage(functionCode)
+    {
+    }
     virtual void DeserializeBody(const Binary::Unpack& pack) override;
 
-    uint8_t  deviceType_ = 0;  // 设备类型
-    uint8_t  pairMode_   = 0;  // 0：自动配对，1：手动配对
-    uint16_t reserve_    = 0;  // 保留
+    PairModeInfo pairModeInfo_;
 };
 
 // 设置配对模式请求消息
@@ -510,12 +522,6 @@ public:
     }
     virtual void SerializeBody(Binary::Pack& pack) override;
 
-    struct PairModeInfo
-    {
-        uint8_t  deviceType_ = 0;  // 设备类型
-        uint8_t  pairMode_   = 0;  // 0：自动配对，1：手动配对
-        uint16_t reserve_    = 0;  // 保留
-    };
     PairModeInfo pairModeInfo_;
 };
 
